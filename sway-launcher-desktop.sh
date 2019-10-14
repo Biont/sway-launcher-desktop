@@ -2,7 +2,7 @@
 # terminal application launcher for sway, using fzf
 # Based on: https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher
 
-HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/sway-launcher-history.txt"
+HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 
 DIRS=(
 /usr/share/applications
@@ -15,7 +15,13 @@ GLYPH_DESKTOP="  "
 
 touch "$HIST_FILE"
 # Filter DIRS array for directories that actually exist. Append *.desktop to remaining elements
-for i in "${!DIRS[@]}" ; do [[ ! -d "${DIRS[i]}" ]] && unset -v 'DIRS[$i]' || DIRS[$i]="${DIRS[i]}/*.desktop" ; done
+for i in "${!DIRS[@]}" ; do
+	if [[ ! -d "${DIRS[i]}" ]]; then
+		unset -v 'DIRS[$i]'
+	else
+		DIRS[$i]="${DIRS[i]}/*.desktop"
+	fi
+done
 DIRS=("${DIRS[@]}")
 
 HIST_FILE_CONTENT=$(< "$HIST_FILE")
@@ -26,7 +32,7 @@ function createPreview(){
 		TITLE=$1
 		DESCRIPTION=$(whatis -l "$1" 2>/dev/null | head -n1 | sed -n -e 's/^.*\(.*\).*\-//p')
 	else
-		TITLE=$(cat $1 | grep ^Name= | head -n1 | awk -F= '{print $2}')
+		TITLE=$(grep ^Name= "$1" | head -n1 | awk -F= '{print $2}')
 		DESCRIPTION=$(grep Comment= "$1" | awk -F= '{print $2}')
     fi
     echo -e "\033[33m $TITLE \033[0m"
@@ -40,6 +46,7 @@ FZFPIPE=$(mktemp)
 (echo "$HIST_FILE_CONTENT" | sed -n -e 's/^[0-9]* //p' >> "$FZFPIPE" )&
 
 # Load and append Desktop entries
+# shellcheck disable=2068
 (grep -roP "Type=Application" ${DIRS[@]} |
  awk -F : '{print $1}' | 
  sort -u | 
@@ -47,6 +54,7 @@ FZFPIPE=$(mktemp)
  awk -F : -v pre="$GLYPH_DESKTOP"  '{print $1 "|desktop|\033[33m" pre "\033[0m" $2}' >> "$FZFPIPE" )&
 
 # Load and append command list
+# shellcheck disable=2086
 ({ IFS=:; ls -H $PATH; } | grep -v '/.*' | sort -u | awk -v pre="$GLYPH_COMMAND" '{print $1 "|command|\033[31m" pre "\033[0m" $1 }' >> "$FZFPIPE" )&
 
 COMMAND_STR=$( (tail -f "$FZFPIPE" & echo $! > pid) |
@@ -84,7 +92,7 @@ command='echo "nope"'
 case $(echo "$COMMAND_STR" | awk -F'|' '{print $2}') in
 desktop)
   file=$(echo "$COMMAND_STR" | awk -F '|' '{print $1}')
-  command=$(cat $file | grep Exec | awk -F'=' '{print $2}')
+  command=$(grep Exec "$file" | awk -F'=' '{print $2}')
   ;;
 
 command)
