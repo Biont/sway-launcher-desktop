@@ -2,103 +2,103 @@
 # terminal application launcher for sway, using fzf
 # Based on: https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher
 
+shopt -s nullglob
+if [[ "$1" = 'describe' ]]; then
+	shift
+	if [[ $2 == 'command' ]]; then
+		title=$1
+		readarray arr < <(whatis -l "$1" 2>/dev/null)
+		description="${arr[0]}"
+		description="${description%*-}"
+	else
+		title=$(sed -ne '/^Name=/{s/^Name=//;p;q}' "$1")
+		description=$(sed -ne '/^Comment=/{s/^Comment=//;p;q}' "$1")
+    fi
+    echo -e "\033[33m $title \033[0m"
+    echo "${description:-No description}"
+	exit
+fi
+
 HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 
 DIRS=(
-/usr/share/applications
-~/.local/share/applications
-/usr/local/share/applications
+	/usr/share/applications
+	"$HOME/.local/share/applications"
+	/usr/local/share/applications
 )
 
 GLYPH_COMMAND="  "
 GLYPH_DESKTOP="  "
 
 touch "$HIST_FILE"
-# Filter DIRS array for directories that actually exist. Append *.desktop to remaining elements
-for i in "${!DIRS[@]}" ; do
-	if [[ ! -d "${DIRS[i]}" ]]; then
-		unset -v 'DIRS[$i]'
-	else
-		DIRS[$i]="${DIRS[i]}/*.desktop"
-	fi
-done
-DIRS=("${DIRS[@]}")
-
-HIST_FILE_CONTENT=$(< "$HIST_FILE")
-
-function createPreview(){
-	DESCRIPTION='No description'
-	if [[ $2 == 'command' ]]; then
-		TITLE=$1
-		DESCRIPTION=$(whatis -l "$1" 2>/dev/null | head -n1 | sed -n -e 's/^.*\(.*\).*\-//p')
-	else
-		TITLE=$(grep ^Name= "$1" | head -n1 | awk -F= '{print $2}')
-		DESCRIPTION=$(grep Comment= "$1" | awk -F= '{print $2}')
-    fi
-    echo -e "\033[33m $TITLE \033[0m"
-    echo "$DESCRIPTION"
-}
-export -f createPreview
-
+readarray HIST_LINES < "$HIST_FILE"
 FZFPIPE=$(mktemp)
+PIDFILE=$(mktemp)
+trap 'rm "$FZFPIPE" "$PIDFILE"' EXIT INT
 
 # Append Launcher History, removing usage count
-(echo "$HIST_FILE_CONTENT" | sed -n -e 's/^[0-9]* //p' >> "$FZFPIPE" )&
+( printf '%s' "${HIST_LINES[@]#* }" >> "$FZFPIPE" ) &
 
 # Load and append Desktop entries
-# shellcheck disable=2068
-(grep -roP "Type=Application" ${DIRS[@]} |
- awk -F : '{print $1}' | 
- sort -u | 
- xargs -d "\n" grep -oP "(?<=Name=).*" | 
- awk -F : -v pre="$GLYPH_DESKTOP"  '{print $1 "|desktop|\033[33m" pre "\033[0m" $2}' >> "$FZFPIPE" )&
+(
+	for dir in "${DIRS[@]}"; do
+		[[ -d "$dir" ]] || continue
+		awk -v pre="$GLYPH_DESKTOP" -F= '
+			BEGINFILE{p=0;}
+			/^Type=Application/{p=1;}
+			/^Name=/{name=$2;}
+			ENDFILE{if (p) print FILENAME "|desktop|\033[33m" pre name "\033[0m";}' \
+		"$dir/"*.desktop < /dev/null >> "$FZFPIPE"
+		# the empty stdin is needed in case no *.desktop files
+	done
+) &
 
 # Load and append command list
-# shellcheck disable=2086
-({ IFS=:; ls -H $PATH; } | grep -v '/.*' | sort -u | awk -v pre="$GLYPH_COMMAND" '{print $1 "|command|\033[31m" pre "\033[0m" $1 }' >> "$FZFPIPE" )&
+(
+	IFS=:
+	read -ra path <<< "$PATH"
+	for dir in "${path[@]}"; do
+		printf '%s\n' "$dir/"* |
+			awk -F / -v pre="$GLYPH_COMMAND" '{print $NF "|command|\033[31m" pre "\033[0m" $NF;}'
+	done | sort -u >> "$FZFPIPE"
+) &
 
-COMMAND_STR=$( (tail -f "$FZFPIPE" & echo $! > pid) |
-  fzf +x +s -d '\|' --nth ..3 --with-nth 3.. --preview 'createPreview {1} {2}' --preview-window=up:3:wrap --ansi ; kill -9 "$(<pid)" |
-  tail -n1) || exit 1
-
+COMMAND_STR=$(
+	(tail -n +0 -f "$FZFPIPE" & echo $! > "$PIDFILE") |
+	fzf +s -x -d '\|' --nth ..3 --with-nth 3.. \
+		--preview "$0 describe {1} {2}" \
+		--preview-window=up:3:wrap --ansi
+	kill -9 "$(<"$PIDFILE")" | tail -n1
+) || exit 1
 
 [ -z "$COMMAND_STR" ] && exit 1
 
-
-# get full line from history (with count number)
-HIST_LINE=$(echo "$HIST_FILE_CONTENT" | grep -Pe "^[0-9]+ \Q$COMMAND_STR\E$")
-# echo "Hist Line: $HIST_LINE"
-
-
-
-if [ "$HIST_LINE" == "" ]; then
-    HIST_COUNT=1
-else
-    # Increment usage count
-    HIST_COUNT=$(echo "$HIST_LINE" | sed -E 's/^([0-9]+) .+$/\1/')
-    ((HIST_COUNT++))
-    # delete line, to add updated later
-    HIST_FILE_CONTENT=$(echo "$HIST_FILE_CONTENT" | \
-	grep --invert-match -Pe "^[0-9]+ \Q$COMMAND_STR\E$")
+# update history
+for i in "${!HIST_LINES[@]}"; do
+	if [[ "${HIST_LINES[i]}" == *" $COMMAND_STR"$'\n' ]]; then
+		HIST_COUNT=${HIST_LINES[i]%% *}
+		HIST_LINES[$i]="$((HIST_COUNT + 1)) $COMMAND_STR"
+		match=1
+		break
+	fi
+done
+if ! (( match )); then
+	HIST_LINES+=("1 $COMMAND_STR"$'\n')
 fi
 
-# update history
-update_line="${HIST_COUNT} ${COMMAND_STR}"
-echo -e "${update_line}\n${HIST_FILE_CONTENT}" | \
-    sort --numeric-sort --reverse > "$HIST_FILE"
+printf '%s' "${HIST_LINES[@]}" | sort -nr > "$HIST_FILE"
 
 command='echo "nope"'
 
-case $(echo "$COMMAND_STR" | awk -F'|' '{print $2}') in
-desktop)
-  file=$(echo "$COMMAND_STR" | awk -F '|' '{print $1}')
-  command=$(grep Exec "$file" | awk -F'=' '{print $2}')
-  ;;
-
-command)
-  command=$(echo "$COMMAND_STR" | awk -F '|' '{print $1}')
-  ;;
-
+# COMMAND_STR is "<string>|<type>"
+case ${COMMAND_STR#*|} in
+desktop*)
+	# .desktop files use "%f", "%d" as placeholders for "Open with..."
+	command=$(sed -ne 's/%.//; /^Exec/{s/^Exec=//;p;q}' "${COMMAND_STR%%|*}")
+	;;
+command*)
+	command="${COMMAND_STR%%|*}"
+	;;
 esac
 
 swaymsg -t command exec "$command"
