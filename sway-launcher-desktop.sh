@@ -11,6 +11,7 @@ if [[ "$1" = 'describe' ]]; then
 		description="${arr[0]}"
 		description="${description%*-}"
 	else
+	echo $1
 		title=$(sed -ne '/^Name=/{s/^Name=//;p;q}' "$1")
 		description=$(sed -ne '/^Comment=/{s/^Comment=//;p;q}' "$1")
     fi
@@ -44,9 +45,9 @@ trap 'rm "$FZFPIPE" "$PIDFILE"' EXIT INT
 	for dir in "${DIRS[@]}"; do
 		[[ -d "$dir" ]] || continue
 		awk -v pre="$GLYPH_DESKTOP" -F= '
-			BEGINFILE{p=0;}
-			/^Type=Application/{p=1;}
-			/^Name=/{name=$2;}
+			BEGINFILE{p=0;n=0}
+			/^Type=Application/{p=1}
+			/^Name=/{if(!n) {n=1;name=$2;}}
 			ENDFILE{if (p) print FILENAME "|desktop|\033[33m" pre name "\033[0m";}' \
 		"$dir/"*.desktop < /dev/null >> "$FZFPIPE"
 		# the empty stdin is needed in case no *.desktop files
