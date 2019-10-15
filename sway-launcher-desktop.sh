@@ -11,7 +11,6 @@ if [[ "$1" = 'describe' ]]; then
 		description="${arr[0]}"
 		description="${description%*-}"
 	else
-	echo $1
 		title=$(sed -ne '/^Name=/{s/^Name=//;p;q}' "$1")
 		description=$(sed -ne '/^Comment=/{s/^Comment=//;p;q}' "$1")
     fi
