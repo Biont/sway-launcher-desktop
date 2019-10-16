@@ -100,12 +100,12 @@ COMMAND_STR=$(
 
 # update history
 for i in "${!HIST_LINES[@]}"; do
-	if [[ "${HIST_LINES[i]}" == *" $COMMAND_STR"$'\n' ]]; then
-		HIST_COUNT=${HIST_LINES[i]%% *}
-		HIST_LINES[$i]="$((HIST_COUNT + 1)) $COMMAND_STR"$'\n'
-		match=1
-		break
-	fi
+  if [[ "${HIST_LINES[i]}" == *" $COMMAND_STR"$'\n' ]]; then
+    HIST_COUNT=${HIST_LINES[i]%% *}
+    HIST_LINES[$i]="$((HIST_COUNT + 1)) $COMMAND_STR"$'\n'
+    match=1
+    break
+  fi
 done
 if ! ((match)); then
   HIST_LINES+=("1 $COMMAND_STR"$'\n')
