@@ -14,7 +14,7 @@ if [[ "$1" == 'describe' ]]; then
     title=$(sed -ne '/^Name=/{s/^Name=//;p;q}' "$1")
     description=$(sed -ne '/^Comment=/{s/^Comment=//;p;q}' "$1")
   fi
-  echo -e "\033[33m $title \033[0m"
+  echo -e "\033[33m$title\033[0m"
   echo "${description:-No description}"
   exit
 fi
