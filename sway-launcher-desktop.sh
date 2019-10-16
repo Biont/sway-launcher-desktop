@@ -62,14 +62,13 @@ trap 'rm "$FZFPIPE" "$PIDFILE"' EXIT INT
                 }
                 }
                 ENDFILE{
-                if (application)
-                    if (a>0)
-                        for (i=1; i<=a; i++)
-                            print FILENAME "\034desktop\034\033[33m" pre name "\033[0m (" actions[i, "name"] ")\034" actions[i, "key"]
-                    else
-                        print FILENAME "\034desktop\034\033[33m" pre name "\033[0m";
-
-                        }' \
+                  if (application){
+                      print FILENAME "\034desktop\034\033[33m" pre name "\033[0m";
+                      if (a>0)
+                          for (i=1; i<=a; i++)
+                              print FILENAME "\034desktop\034\033[33m" pre name "\033[0m (" actions[i, "name"] ")\034" actions[i, "key"]
+                  }
+                }' \
       "$dir/"*.desktop </dev/null >>"$FZFPIPE"
     # the empty stdin is needed in case no *.desktop files
   done
