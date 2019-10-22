@@ -131,7 +131,7 @@ desktop)
   # 3. We see an Exec= line during search: remove field codes and set variable
   # 3. We see a Path= line during search: set variable
   # 4. Finally, build command line
-  command=$(awk -v pattern="${PATTERN}" -F= '
+  command=$(awk -v pattern="${PATTERN}" -v terminal_command="${TERMINAL_COMMAND}" -F= '
                 BEGIN{a=0;exec=0;path=0}
                    /^\[Desktop/{
                     if(a){
@@ -165,7 +165,7 @@ desktop)
                     printf "cd " path " &&"
                   }
                   if (terminal){
-                    printf "$TERMINAL_COMMAND "
+                    printf terminal_command " "
                   }
                   print exec
                 }' "${PARAMS[0]}")
