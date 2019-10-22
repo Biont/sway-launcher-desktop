@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # terminal application launcher for sway, using fzf
 # Based on: https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher
+# https://gist.github.com/Biont/40ef59652acf3673520c7a03c9f22d2a
 
 shopt -s nullglob
 if [[ "$1" == 'describe' ]]; then
@@ -18,6 +19,8 @@ if [[ "$1" == 'describe' ]]; then
   echo "${description:-No description}"
   exit
 fi
+
+TERMINAL_COMMAND="termite -e"
 
 HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 
@@ -129,7 +132,7 @@ desktop)
   # 3. We see a Path= line during search: set variable
   # 4. Finally, build command line
   command=$(awk -v pattern="${PATTERN}" -F= '
-                BEGIN{a=0;exec=0; path=0}
+                BEGIN{a=0;exec=0;path=0}
                    /^\[Desktop/{
                     if(a){
                       a=0
@@ -137,6 +140,12 @@ desktop)
                    }
                   $0 ~ pattern{
                    a=1
+                  }
+                  /^Terminal=/{
+                    sub("^Terminal=", "");
+                    if ($0 == "true") {
+                      terminal=1
+                    }
                   }
                   /^Exec=/{
                     if(a && !exec){
@@ -153,7 +162,10 @@ desktop)
 
                 END{
                   if(path){
-                    print "cd " path " &&"
+                    printf "cd " path " &&"
+                  }
+                  if (terminal){
+                    printf "$TERMINAL_COMMAND "
                   }
                   print exec
                 }' "${PARAMS[0]}")
@@ -162,4 +174,5 @@ command)
   command="${PARAMS[0]}"
   ;;
 esac
+echo "Executing command: \"$command\"" >> ~/.local/var/log/sway-launcher.log
 swaymsg -t command exec "$command"
