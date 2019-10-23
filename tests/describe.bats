@@ -5,9 +5,9 @@
   [[ ${lines[1]} =~ "Browse the World Wide Web" ]]
 }
 
-@test "Name and description of awk command should be given" {
-  run ../sway-launcher-desktop.sh describe awk command
+@test "Name and description of ls command should be given" {
+  run ../sway-launcher-desktop.sh describe ls command
   [ "$status" -eq 0 ]
-  [[ ${lines[0]} =~ "awk" ]]
-  [[ ${lines[1]} =~ "pattern scanning and processing language" ]]
+  [[ ${lines[0]} =~ "ls" ]]
+  [[ ${lines[1]} =~ "list directory contents" ]]
 }
