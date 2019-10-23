@@ -20,7 +20,10 @@ if [[ "$1" == 'describe' ]]; then
   exit
 fi
 
-TERMINAL_COMMAND="termite -e"
+# Defaulting terminal to termite, but feel free to either change
+# this or override with an environment variable in your sway config
+# It would be good to move this to a config file eventually
+set ${TERMINAL_COMMAND:="termite -e"}
 
 HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 
