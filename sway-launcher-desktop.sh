@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # terminal application launcher for sway, using fzf
 # Based on: https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher
+# https://gist.github.com/Biont/40ef59652acf3673520c7a03c9f22d2a
 
 shopt -s nullglob
 if [[ "$1" == 'describe' ]]; then
@@ -18,6 +19,11 @@ if [[ "$1" == 'describe' ]]; then
   echo "${description:-No description}"
   exit
 fi
+
+# Defaulting terminal to termite, but feel free to either change
+# this or override with an environment variable in your sway config
+# It would be good to move this to a config file eventually
+set ${TERMINAL_COMMAND:="termite -e"}
 
 HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 
@@ -128,8 +134,8 @@ desktop)
   # 3. We see an Exec= line during search: remove field codes and set variable
   # 3. We see a Path= line during search: set variable
   # 4. Finally, build command line
-  command=$(awk -v pattern="${PATTERN}" -F= '
-                BEGIN{a=0;exec=0; path=0}
+  command=$(awk -v pattern="${PATTERN}" -v terminal_command="${TERMINAL_COMMAND}" -F= '
+                BEGIN{a=0;exec=0;path=0}
                    /^\[Desktop/{
                     if(a){
                       a=0
@@ -137,6 +143,12 @@ desktop)
                    }
                   $0 ~ pattern{
                    a=1
+                  }
+                  /^Terminal=/{
+                    sub("^Terminal=", "");
+                    if ($0 == "true") {
+                      terminal=1
+                    }
                   }
                   /^Exec=/{
                     if(a && !exec){
@@ -153,7 +165,10 @@ desktop)
 
                 END{
                   if(path){
-                    print "cd " path " &&"
+                    printf "cd " path " &&"
+                  }
+                  if (terminal){
+                    printf terminal_command " "
                   }
                   print exec
                 }' "${PARAMS[0]}")
@@ -162,4 +177,5 @@ command)
   command="${PARAMS[0]}"
   ;;
 esac
+
 swaymsg -t command exec "$command"
