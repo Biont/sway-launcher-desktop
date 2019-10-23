@@ -174,5 +174,5 @@ command)
   command="${PARAMS[0]}"
   ;;
 esac
-echo "Executing command: \"$command\"" >> ~/.local/var/log/sway-launcher.log
+
 swaymsg -t command exec "$command"
