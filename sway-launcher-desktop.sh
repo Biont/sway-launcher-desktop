@@ -3,14 +3,12 @@
 # Based on: https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher
 # https://gist.github.com/Biont/40ef59652acf3673520c7a03c9f22d2a
 shopt -s nullglob
-set -uo pipefail
+set -o pipefail
 # shellcheck disable=SC2154
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 IFS=$'\n\t'
 
-SUBCOMMAND=${1:-}
-
-if [[ -n $SUBCOMMAND ]] && [[ "$SUBCOMMAND" == 'describe' ]]; then
+if [[ "$1" == 'describe' ]]; then
   shift
   if [[ $2 == 'command' ]]; then
     title=$1
@@ -26,10 +24,14 @@ if [[ -n $SUBCOMMAND ]] && [[ "$SUBCOMMAND" == 'describe' ]]; then
   exit
 fi
 
+# Defaulting terminal to termite, but feel free to either change
+# this or override with an environment variable in your sway config
+# It would be good to move this to a config file eventually
+TERMINAL_COMMAND="${TERMINAL_COMMAND:="termite -e"}"
 GLYPH_COMMAND="  "
 GLYPH_DESKTOP="  "
 
-if [[ -n $SUBCOMMAND ]] && [[ "$SUBCOMMAND" == 'entries' ]]; then
+if [[ "$1" == 'entries' ]]; then
   shift
   awk -v pre="$GLYPH_DESKTOP" -F= '
     BEGINFILE{application=0;block="";a=0}
@@ -63,10 +65,58 @@ if [[ -n $SUBCOMMAND ]] && [[ "$SUBCOMMAND" == 'entries' ]]; then
   exit 0
 fi
 
-# Defaulting terminal to termite, but feel free to either change
-# this or override with an environment variable in your sway config
-# It would be good to move this to a config file eventually
-set "${TERMINAL_COMMAND:="termite -e"}"
+if [[ "$1" == 'generate-command' ]]; then
+  shift
+  # Define the search pattern that specifies the block to search for within the .desktop file
+  PATTERN="^\\\\[Desktop Entry\\\\]"
+  if [[ -n $2 ]]; then
+    PATTERN="^\\\\[Desktop Action ${2%?}\\\\]"
+  fi
+  # 1. We see a line starting [Desktop, but we're already searching: deactivate search again
+  # 2. We see the specified pattern: start search
+  # 3. We see an Exec= line during search: remove field codes and set variable
+  # 3. We see a Path= line during search: set variable
+  # 4. Finally, build command line
+  awk -v pattern="${PATTERN}" -v terminal_command="${TERMINAL_COMMAND}" -F= '
+    BEGIN{a=0;exec=0;path=0}
+       /^\[Desktop/{
+        if(a){
+          a=0
+        }
+       }
+      $0 ~ pattern{
+       a=1
+      }
+      /^Terminal=/{
+        sub("^Terminal=", "");
+        if ($0 == "true") {
+          terminal=1
+        }
+      }
+      /^Exec=/{
+        if(a && !exec){
+          sub("^Exec=", "");
+          gsub(" ?%[cDdFfikmNnUuv]", "");
+          exec=$0;
+        }
+      }
+      /^Path=/{
+        if(a && !path){
+          path=$2
+        }
+       }
+
+    END{
+      if(path){
+        printf "cd " path " &&"
+      }
+      if (terminal){
+        printf terminal_command " "
+      }
+      print exec
+    }' "$1"
+  exit 0
+fi
 
 HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 
@@ -137,54 +187,7 @@ readarray -d $'\034' -t PARAMS <<<${COMMAND_STR}
 # COMMAND_STR is "<string>\034<type>"
 case ${PARAMS[1]} in
 desktop)
-  # Define the search pattern that specifies the block to search for within the .desktop file
-  PATTERN="^\\\\[Desktop Entry\\\\]"
-  if [[ -n ${PARAMS[3]} ]]; then
-    PATTERN="^\\\\[Desktop Action ${PARAMS[3]%?}\\\\]"
-  fi
-  # 1. We see a line starting [Desktop, but we're already searching: deactivate search again
-  # 2. We see the specified pattern: start search
-  # 3. We see an Exec= line during search: remove field codes and set variable
-  # 3. We see a Path= line during search: set variable
-  # 4. Finally, build command line
-  command=$(awk -v pattern="${PATTERN}" -v terminal_command="${TERMINAL_COMMAND}" -F= '
-                BEGIN{a=0;exec=0;path=0}
-                   /^\[Desktop/{
-                    if(a){
-                      a=0
-                    }
-                   }
-                  $0 ~ pattern{
-                   a=1
-                  }
-                  /^Terminal=/{
-                    sub("^Terminal=", "");
-                    if ($0 == "true") {
-                      terminal=1
-                    }
-                  }
-                  /^Exec=/{
-                    if(a && !exec){
-                      sub("^Exec=", "");
-                      gsub(" ?%[cDdFfikmNnUuv]", "");
-                      exec=$0;
-                    }
-                  }
-                  /^Path=/{
-                    if(a && !path){
-                      path=$2
-                    }
-                   }
-
-                END{
-                  if(path){
-                    printf "cd " path " &&"
-                  }
-                  if (terminal){
-                    printf terminal_command " "
-                  }
-                  print exec
-                }' "${PARAMS[0]}")
+  command=$($0 generate-command "${PARAMS[0]}" "${PARAMS[3]}")
   ;;
 command)
   command="${PARAMS[0]}"
