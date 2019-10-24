@@ -108,7 +108,7 @@ if [[ "$1" == 'generate-command' ]]; then
 
     END{
       if(path){
-        printf "cd " path " &&"
+        printf "cd " path " && "
       }
       if (terminal){
         printf terminal_command " "
