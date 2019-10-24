@@ -2,9 +2,15 @@
 # terminal application launcher for sway, using fzf
 # Based on: https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher
 # https://gist.github.com/Biont/40ef59652acf3673520c7a03c9f22d2a
-
 shopt -s nullglob
-if [[ "$1" == 'describe' ]]; then
+set -uo pipefail
+# shellcheck disable=SC2154
+trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
+IFS=$'\n\t'
+
+SUBCOMMAND=${1:-}
+
+if [[ -n $SUBCOMMAND ]] && [[ "$SUBCOMMAND" == 'describe' ]]; then
   shift
   if [[ $2 == 'command' ]]; then
     title=$1
@@ -20,6 +26,43 @@ if [[ "$1" == 'describe' ]]; then
   exit
 fi
 
+GLYPH_COMMAND="  "
+GLYPH_DESKTOP="  "
+
+if [[ -n $SUBCOMMAND ]] && [[ "$SUBCOMMAND" == 'entries' ]]; then
+  shift
+  awk -v pre="$GLYPH_DESKTOP" -F= '
+    BEGINFILE{application=0;block="";a=0}
+    /^\[Desktop Entry\]/{block="entry"}
+    /^Type=Application/{application=1}
+    /^\[Desktop Action/{
+      sub("^\\[Desktop Action ", "");
+      sub("\\]$", "");
+      block="action";
+      a++;
+      actions[a,"key"]=$0
+    }
+    /^Name=/{
+    if(block=="action") {
+        actions[a,"name"]=$2;
+    } else {
+        name=$2
+    }
+    }
+    ENDFILE{
+      if (application){
+          print FILENAME "\034desktop\034\033[33m" pre name "\033[0m";
+          if (a>0)
+              for (i=1; i<=a; i++)
+                  print FILENAME "\034desktop\034\033[33m" pre name "\033[0m (" actions[i, "name"] ")\034" actions[i, "key"]
+      }
+    }' \
+    "$@" </dev/null
+  # the empty stdin is needed in case no *.desktop files
+
+  exit 0
+fi
+
 # Defaulting terminal to termite, but feel free to either change
 # this or override with an environment variable in your sway config
 # It would be good to move this to a config file eventually
@@ -32,9 +75,6 @@ DIRS=(
   "$HOME/.local/share/applications"
   /usr/local/share/applications
 )
-
-GLYPH_COMMAND="  "
-GLYPH_DESKTOP="  "
 
 touch "$HIST_FILE"
 readarray HIST_LINES <"$HIST_FILE"
@@ -49,34 +89,7 @@ trap 'rm "$FZFPIPE" "$PIDFILE"' EXIT INT
 (
   for dir in "${DIRS[@]}"; do
     [[ -d "$dir" ]] || continue
-    awk -v pre="$GLYPH_DESKTOP" -F= '
-                BEGINFILE{application=0;block="";a=0}
-                /^\[Desktop Entry\]/{block="entry"}
-                /^Type=Application/{application=1}
-                /^\[Desktop Action/{
-                  sub("^\\[Desktop Action ", "");
-                  sub("\\]$", "");
-                  block="action";
-                  a++;
-                  actions[a,"key"]=$0
-                }
-                /^Name=/{
-                if(block=="action") {
-                    actions[a,"name"]=$2;
-                } else {
-                    name=$2
-                }
-                }
-                ENDFILE{
-                  if (application){
-                      print FILENAME "\034desktop\034\033[33m" pre name "\033[0m";
-                      if (a>0)
-                          for (i=1; i<=a; i++)
-                              print FILENAME "\034desktop\034\033[33m" pre name "\033[0m (" actions[i, "name"] ")\034" actions[i, "key"]
-                  }
-                }' \
-      "$dir/"*.desktop </dev/null >>"$FZFPIPE"
-    # the empty stdin is needed in case no *.desktop files
+    "$0 entries $dir/*.desktop" >>"$FZFPIPE"
   done
 ) &
 
