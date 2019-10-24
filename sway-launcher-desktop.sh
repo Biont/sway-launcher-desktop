@@ -139,7 +139,7 @@ trap 'rm "$FZFPIPE" "$PIDFILE"' EXIT INT
 (
   for dir in "${DIRS[@]}"; do
     [[ -d "$dir" ]] || continue
-    "$0 entries $dir/*.desktop" >>"$FZFPIPE"
+    $0 entries "$dir"/*.desktop >>"$FZFPIPE"
   done
 ) &
 
