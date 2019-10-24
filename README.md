@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/Biont/sway-launcher-desktop.svg?branch=master)](https://travis-ci.org/Biont/sway-launcher-desktop)
 # sway-launcher-desktop
 
 This is a launcher menu made for the Sway window manager made with bash and the amazing [fzf](https://github.com/junegunn/fzf).
