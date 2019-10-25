@@ -20,6 +20,9 @@ Make sure you have `fzf` installed and download this repository
 Configure it in Sway like this:
 ```
 for_window [class="URxvt" instance="launcher"] floating enable, border pixel 10, sticky enable
-set $menu exec urxvt -geometry 55x18 -name launcher -e /path/to/repo/sway-launcher-desktop.sh
+set $menu exec urxvt -geometry 55x18 -name launcher -e 'TERMINAL_COMMAND="urxvt -c" /path/to/repo/sway-launcher-desktop.sh'
 bindsym $mod+d exec $menu
 ```
+
+### Setup a Terminal command
+Some of your desktop entries will probably be TUI programs that expect to be launched in a new terminal window. Those entries have the `Terminal=true` flag set and you need to tell the launcher which terminal emulator to use. Pass the `TERMINAL_COMMAND` environment variable with your terminal startup command to the script to use your preferred terminal emulator. The script will default to `termine -e`
