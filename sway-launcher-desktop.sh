@@ -194,4 +194,4 @@ command)
   ;;
 esac
 
-swaymsg -t command exec "$command"
+swaymsg -t command exec "'$command'"
