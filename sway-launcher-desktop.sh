@@ -8,8 +8,20 @@ set -o pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 IFS=$'\n\t'
 
-if [[ "$1" == 'describe' ]]; then
-  shift
+# Defaulting terminal to termite, but feel free to either change
+# this or override with an environment variable in your sway config
+# It would be good to move this to a config file eventually
+TERMINAL_COMMAND="${TERMINAL_COMMAND:="termite -e"}"
+GLYPH_COMMAND="  "
+GLYPH_DESKTOP="  "
+HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
+DIRS=(
+  /usr/share/applications
+  "$HOME/.local/share/applications"
+  /usr/local/share/applications
+)
+
+function describe() {
   if [[ $2 == 'command' ]]; then
     title=$1
     readarray arr < <(whatis -l "$1" 2>/dev/null)
@@ -21,18 +33,9 @@ if [[ "$1" == 'describe' ]]; then
   fi
   echo -e "\033[33m$title\033[0m"
   echo "${description:-No description}"
-  exit
-fi
+}
 
-# Defaulting terminal to termite, but feel free to either change
-# this or override with an environment variable in your sway config
-# It would be good to move this to a config file eventually
-TERMINAL_COMMAND="${TERMINAL_COMMAND:="termite -e"}"
-GLYPH_COMMAND="  "
-GLYPH_DESKTOP="  "
-
-if [[ "$1" == 'entries' ]]; then
-  shift
+function entries() {
   awk -v pre="$GLYPH_DESKTOP" -F= '
     BEGINFILE{application=0;block="";a=0}
     /^\[Desktop Entry\]/{block="entry"}
@@ -61,12 +64,9 @@ if [[ "$1" == 'entries' ]]; then
     }' \
     "$@" </dev/null
   # the empty stdin is needed in case no *.desktop files
+}
 
-  exit 0
-fi
-
-if [[ "$1" == 'generate-command' ]]; then
-  shift
+function generate-command() {
   # Define the search pattern that specifies the block to search for within the .desktop file
   PATTERN="^\\\\[Desktop Entry\\\\]"
   if [[ -n $2 ]]; then
@@ -115,16 +115,14 @@ if [[ "$1" == 'generate-command' ]]; then
       }
       print exec
     }' "$1"
-  exit 0
-fi
+}
 
-HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
-
-DIRS=(
-  /usr/share/applications
-  "$HOME/.local/share/applications"
-  /usr/local/share/applications
-)
+case "$1" in
+describe | entries | generate-command)
+  "$@"
+  exit
+  ;;
+esac
 
 touch "$HIST_FILE"
 readarray HIST_LINES <"$HIST_FILE"
@@ -139,7 +137,7 @@ trap 'rm "$FZFPIPE" "$PIDFILE"' EXIT INT
 (
   for dir in "${DIRS[@]}"; do
     [[ -d "$dir" ]] || continue
-    $0 entries "$dir"/*.desktop >>"$FZFPIPE"
+    entries "$dir"/*.desktop >>"$FZFPIPE"
   done
 ) &
 
@@ -187,10 +185,10 @@ readarray -d $'\034' -t PARAMS <<<${COMMAND_STR}
 # COMMAND_STR is "<string>\034<type>"
 case ${PARAMS[1]} in
 desktop)
-  command=$($0 generate-command "${PARAMS[0]}" "${PARAMS[3]}")
+  command=$(generate-command "${PARAMS[0]}" "${PARAMS[3]}")
   ;;
 command)
-  command="${PARAMS[0]}"
+  command="$TERMINAL_COMMAND ${PARAMS[0]}"
   ;;
 esac
 
