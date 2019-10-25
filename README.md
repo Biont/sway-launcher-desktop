@@ -20,7 +20,7 @@ Make sure you have `fzf` installed and download this repository
 Configure it in Sway like this:
 ```
 for_window [class="URxvt" instance="launcher"] floating enable, border pixel 10, sticky enable
-set $menu exec urxvt -geometry 55x18 -name launcher -e 'TERMINAL_COMMAND="urxvt -c" /path/to/repo/sway-launcher-desktop.sh'
+set $menu exec urxvt -geometry 55x18 -name launcher -e env TERMINAL_COMMAND="urxvt -c" /path/to/repo/sway-launcher-desktop.sh
 bindsym $mod+d exec $menu
 ```
 
