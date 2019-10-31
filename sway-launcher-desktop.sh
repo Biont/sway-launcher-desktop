@@ -2,7 +2,7 @@
 # terminal application launcher for sway, using fzf
 # Based on: https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher
 # https://gist.github.com/Biont/40ef59652acf3673520c7a03c9f22d2a
-shopt -s nullglob
+shopt -s nullglob globstar
 set -o pipefail
 # shellcheck disable=SC2154
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
@@ -15,10 +15,12 @@ TERMINAL_COMMAND="${TERMINAL_COMMAND:="termite -e"}"
 GLYPH_COMMAND="  "
 GLYPH_DESKTOP="  "
 HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
+
+# TODO: Actually follow spec here: https://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
 DIRS=(
-  /usr/share/applications
   "$HOME/.local/share/applications"
   /usr/local/share/applications
+  /usr/share/applications
 )
 
 function describe() {
@@ -36,8 +38,24 @@ function describe() {
 }
 
 function entries() {
+  # shellcheck disable=SC2068
   awk -v pre="$GLYPH_DESKTOP" -F= '
-    BEGINFILE{application=0;block="";a=0}
+    function desktopFileID(filename){
+      sub("^.*applications/", "", filename);
+      sub("/", "-", filename);
+      return filename
+    }
+    BEGINFILE{
+      id=desktopFileID(FILENAME)
+      if(id in fileIds){
+        exit;
+      }else{
+        fileIds[id]=0
+      }
+      application=0;
+      block="";
+      a=0
+    }
     /^\[Desktop Entry\]/{block="entry"}
     /^Type=Application/{application=1}
     /^\[Desktop Action/{
@@ -62,7 +80,7 @@ function entries() {
                   print FILENAME "\034desktop\034\033[33m" pre name "\033[0m (" actions[i, "name"] ")\034" actions[i, "key"]
       }
     }' \
-    "$@" </dev/null
+    $@ </dev/null
   # the empty stdin is needed in case no *.desktop files
 }
 
@@ -134,12 +152,17 @@ trap 'rm "$FZFPIPE" "$PIDFILE"' EXIT INT
 (printf '%s' "${HIST_LINES[@]#* }" >>"$FZFPIPE") &
 
 # Load and append Desktop entries
-(
-  for dir in "${DIRS[@]}"; do
-    [[ -d "$dir" ]] || continue
-    entries "$dir"/*.desktop >>"$FZFPIPE"
-  done
-) &
+#(
+for i in "${!DIRS[@]}"; do
+  if [[ ! -d "${DIRS[i]}" ]]; then
+    unset -v 'DIRS[$i]'
+  else
+    DIRS[$i]="${DIRS[i]}/**/*.desktop"
+  fi
+done
+# shellcheck disable=SC2068
+entries ${DIRS[@]} >>"$FZFPIPE"
+#) &
 
 # Load and append command list
 (
