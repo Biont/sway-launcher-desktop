@@ -16,12 +16,9 @@ GLYPH_COMMAND="  "
 GLYPH_DESKTOP="  "
 HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 
-# TODO: Actually follow spec here: https://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
-DIRS=(
-  "$HOME/.local/share/applications"
-  /usr/local/share/applications
-  /usr/share/applications
-)
+# Get locations of desktop application folders according to spec
+# https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+IFS=':' read -ra DIRS <<< "${XDG_CONFIG_HOME-${HOME}/.config}:${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
 
 function describe() {
   if [[ $2 == 'command' ]]; then
@@ -157,7 +154,7 @@ for i in "${!DIRS[@]}"; do
   if [[ ! -d "${DIRS[i]}" ]]; then
     unset -v 'DIRS[$i]'
   else
-    DIRS[$i]="${DIRS[i]}/**/*.desktop"
+    DIRS[$i]="${DIRS[i]}/applications/**/*.desktop"
   fi
 done
 # shellcheck disable=SC2068
