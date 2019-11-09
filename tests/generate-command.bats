@@ -7,7 +7,7 @@
 @test "Exec command is properly generated from htop desktop file" {
   run ../sway-launcher-desktop.sh generate-command data/desktop-files/0/applications/htop.desktop
   [ "$status" -eq 0 ]
-  [[ "$output" ==  'termite -e htop' ]]
+  [[ "$output" ==  'urxvt -e htop' ]]
 }
 
 @test "Exec command is properly generated from minecraft-launcher desktop file" {

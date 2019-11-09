@@ -8,7 +8,7 @@ set -o pipefail
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 IFS=$'\n\t'
 
-# Defaulting terminal to termite, but feel free to either change
+# Defaulting terminal to urxvt, but feel free to either change
 # this or override with an environment variable in your sway config
 # It would be good to move this to a config file eventually
 TERMINAL_COMMAND="${TERMINAL_COMMAND:="urxvt -e"}"
