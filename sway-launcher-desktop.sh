@@ -18,7 +18,7 @@ HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 
 # Get locations of desktop application folders according to spec
 # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-IFS=':' read -ra DIRS <<< "${XDG_CONFIG_HOME-${HOME}/.config}:${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
+IFS=':' read -ra DIRS <<< "${XDG_DATA_HOME-${HOME}/.local/share}:${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
 
 function describe() {
   if [[ $2 == 'command' ]]; then
