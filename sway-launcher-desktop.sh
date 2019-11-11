@@ -149,7 +149,7 @@ trap 'rm "$FZFPIPE" "$PIDFILE"' EXIT INT
 (printf '%s' "${HIST_LINES[@]#* }" >>"$FZFPIPE") &
 
 # Load and append Desktop entries
-#(
+(
 for i in "${!DIRS[@]}"; do
   if [[ ! -d "${DIRS[i]}" ]]; then
     unset -v 'DIRS[$i]'
@@ -159,7 +159,7 @@ for i in "${!DIRS[@]}"; do
 done
 # shellcheck disable=SC2068
 entries ${DIRS[@]} >>"$FZFPIPE"
-#) &
+) &
 
 # Load and append command list
 (
