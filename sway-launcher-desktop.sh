@@ -43,15 +43,16 @@ function entries() {
       return filename
     }
     BEGINFILE{
-      id=desktopFileID(FILENAME)
-      if(id in fileIds){
-        exit;
-      }else{
-        fileIds[id]=0
-      }
       application=0;
       block="";
       a=0
+
+      id=desktopFileID(FILENAME)
+      if(id in fileIds){
+        nextfile;
+      }else{
+        fileIds[id]=0
+      }
     }
     /^\[Desktop Entry\]/{block="entry"}
     /^Type=Application/{application=1}
