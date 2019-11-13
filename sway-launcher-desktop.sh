@@ -180,7 +180,7 @@ COMMAND_STR=$(
     fzf +s -x -d '\034' --nth ..3 --with-nth 3 \
       --preview "$0 describe {1} {2}" \
       --preview-window=up:3:wrap --ansi
-  kill -9 "$(<"$PIDFILE")" | tail -n1
+  (kill -9 "$(<"$PIDFILE")"; exit 0) | tail -n1
 ) || exit 1
 
 [ -z "$COMMAND_STR" ] && exit 1
