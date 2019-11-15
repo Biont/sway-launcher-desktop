@@ -2,7 +2,8 @@
 
 ![screenshot_2019-10-25-213740](https://user-images.githubusercontent.com/4208996/67599848-3a1f3680-f771-11e9-9715-da6e943ae14e.png)
 
-This is a launcher menu made for the Sway window manager made with bash and the amazing [fzf](https://github.com/junegunn/fzf).
+This is a TUI-based launcher menu made with bash and the amazing [fzf](https://github.com/junegunn/fzf).
+Despite its name, it does not (read: no longer) depend on the Sway window manager in any way and can be used with just about any WM.
 
 ## Features
 - Lists and executes available binaries

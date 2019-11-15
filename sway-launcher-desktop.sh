@@ -213,4 +213,4 @@ command)
   ;;
 esac
 
-swaymsg exec "'$command'"
+exec setsid /bin/sh -c "$command"
