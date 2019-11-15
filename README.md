@@ -15,7 +15,11 @@ Despite its name, it does not (read: no longer) depend on the Sway window manage
 
 ## Installation
 
-Make sure you have `fzf` installed and download this repository
+Make sure you have `fzf` installed and download this repository. 
+Arch Linux used can also grab it from the AUR (thanks @turtlewit)
+
+* [sway-launcher-desktop](https://aur.archlinux.org/packages/sway-launcher-desktop/)
+* [sway-launcher-desktop-git](https://aur.archlinux.org/packages/sway-launcher-desktop-git/)
 
 Configure it in Sway like this:
 ```
@@ -23,6 +27,8 @@ for_window [class="URxvt" instance="launcher"] floating enable, border pixel 10,
 set $menu exec urxvt -geometry 55x18 -name launcher -e env TERMINAL_COMMAND="urxvt -e" /path/to/repo/sway-launcher-desktop.sh
 bindsym $mod+d exec $menu
 ```
+
+
 
 ### Setup a Terminal command
 Some of your desktop entries will probably be TUI programs that expect to be launched in a new terminal window. Those entries have the `Terminal=true` flag set and you need to tell the launcher which terminal emulator to use. Pass the `TERMINAL_COMMAND` environment variable with your terminal startup command to the script to use your preferred terminal emulator. The script will default to `urxvt -e`
