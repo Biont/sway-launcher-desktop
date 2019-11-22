@@ -142,9 +142,9 @@ esac
 
 touch "$HIST_FILE"
 readarray HIST_LINES <"$HIST_FILE"
-FZFPIPE=$(mktemp)
-PIDFILE=$(mktemp)
-trap 'rm "$FZFPIPE" "$PIDFILE"' EXIT INT
+FZFPIPE=$(mktemp -u)
+mkfifo "$FZFPIPE"
+trap 'rm "$FZFPIPE"' EXIT INT
 
 # Append Launcher History, removing usage count
 (printf '%s' "${HIST_LINES[@]#* }" >>"$FZFPIPE") &
@@ -173,14 +173,10 @@ entries ${DIRS[@]} >>"$FZFPIPE"
 ) &
 
 COMMAND_STR=$(
-  (
-    tail -n +0 -f "$FZFPIPE" &
-    echo $! >"$PIDFILE"
-  ) |
-    fzf +s -x -d '\034' --nth ..3 --with-nth 3 \
-      --preview "$0 describe {1} {2}" \
-      --preview-window=up:3:wrap --ansi
-  (kill -9 "$(<"$PIDFILE")"; exit 0) | tail -n1
+  fzf +s -x -d '\034' --nth ..3 --with-nth 3 \
+    --preview "$0 describe {1} {2}" \
+    --preview-window=up:3:wrap --ansi \
+    <"$FZFPIPE"
 ) || exit 1
 
 [ -z "$COMMAND_STR" ] && exit 1
