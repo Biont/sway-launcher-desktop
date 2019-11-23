@@ -209,4 +209,4 @@ command)
   ;;
 esac
 
-exec setsid /bin/sh -c "$command"
+(exec setsid /bin/sh -c "$command" &)
