@@ -43,6 +43,10 @@ function describe() {
   echo "${description:-No description}"
 }
 
+function provide() {
+  readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[$1]}
+  eval "${PROVIDER_ARGS[0]}"
+}
 function list-commands() {
   IFS=: read -ra path <<<"$PATH"
   for dir in "${path[@]}"; do
@@ -165,7 +169,7 @@ function generate-command() {
 }
 
 case "$1" in
-describe | entries | list-entries | list-commands | command-line | generate-command | purge)
+describe | entries | list-entries | list-commands | command-line | generate-command | provide)
   "$@"
   exit
   ;;
@@ -179,10 +183,7 @@ trap 'rm "$FZFPIPE"' EXIT INT
 (printf '%s' "${HIST_LINES[@]#* }" >>"$FZFPIPE") &
 
 # Iterate over providers and run their list-command
-for PROVIDER in "${PROVIDERS[@]}"; do
-  readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDER}
-  (bash -c "${PROVIDER_ARGS[0]}" >>"$FZFPIPE") &
-done
+for PROVIDER_NAME in "${!PROVIDERS[@]}"; do (bash -c "${0} provide ${PROVIDER_NAME}"  >>"$FZFPIPE") & done
 
 COMMAND_STR=$(
   fzf +s -x -d '\034' --nth ..3 --with-nth 3 \
