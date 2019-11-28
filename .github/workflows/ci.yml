@@ -5,8 +5,6 @@ jobs:
     name: build
     runs-on: ubuntu-latest
     steps:
-      - name: shellcheck
-        uses: ludeeus/action-shellcheck@0.1.0
       - name: Setup BATS
         uses: mig4/setup-bats@master
         with:
@@ -14,6 +12,9 @@ jobs:
 
       - name: Check out code
         uses: actions/checkout@v1
+
+      - name: shellcheck
+        uses: ludeeus/action-shellcheck@0.1.0
 
       - name: Test
         run: cd tests && bats *.bats
