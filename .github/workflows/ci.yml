@@ -1,11 +1,12 @@
-name: "BATS"
+name: "CI"
 on: [push, pull_request]
 jobs:
   build:
     name: build
     runs-on: ubuntu-latest
     steps:
-
+      - name: shellcheck
+        uses: ludeeus/action-shellcheck@0.1.0
       - name: Setup BATS
         uses: mig4/setup-bats@master
         with:
