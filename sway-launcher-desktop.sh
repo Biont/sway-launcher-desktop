@@ -7,6 +7,7 @@ set -o pipefail
 # shellcheck disable=SC2154
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 IFS=$'\n\t'
+DEL=$'\34'
 
 # Defaulting terminal to urxvt, but feel free to either change
 # this or override with an environment variable in your sway config
@@ -16,10 +17,18 @@ GLYPH_COMMAND="  "
 GLYPH_DESKTOP="  "
 HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 
-# Get locations of desktop application folders according to spec
-# https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-IFS=':' read -ra DIRS <<< "${XDG_DATA_HOME-${HOME}/.local/share}:${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
+# Provider config entries are separated by the field separator \034 and have the following structure:
+# list_cmd,launch_cmd
+declare -A PROVIDERS
+PROVIDERS['desktop']="${0} list-entries${DEL}${0} generate-command"
+PROVIDERS['command']="${0} list-commands${DEL}${0} command-line"
 
+touch "$HIST_FILE"
+readarray HIST_LINES <"$HIST_FILE"
+
+function command-line() {
+  echo "${TERMINAL_COMMAND} ${1}"
+}
 function describe() {
   if [[ $2 == 'command' ]]; then
     title=$1
@@ -34,6 +43,28 @@ function describe() {
   echo "${description:-No description}"
 }
 
+function list-commands() {
+  IFS=: read -ra path <<<"$PATH"
+  for dir in "${path[@]}"; do
+    printf '%s\n' "$dir/"* |
+      awk -F / -v pre="$GLYPH_COMMAND" '{print $NF "\034command\034\033[31m" pre "\033[0m" $NF;}'
+  done | sort -u
+}
+function list-entries() {
+  # Get locations of desktop application folders according to spec
+  # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+  IFS=':' read -ra DIRS <<<"${XDG_DATA_HOME-${HOME}/.local/share}:${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
+
+  for i in "${!DIRS[@]}"; do
+    if [[ ! -d "${DIRS[i]}" ]]; then
+      unset -v 'DIRS[$i]'
+    else
+      DIRS[$i]="${DIRS[i]}/applications/**/*.desktop"
+    fi
+  done
+  # shellcheck disable=SC2068
+  entries ${DIRS[@]}
+}
 function entries() {
   # shellcheck disable=SC2068
   awk -v pre="$GLYPH_DESKTOP" -F= '
@@ -134,14 +165,12 @@ function generate-command() {
 }
 
 case "$1" in
-describe | entries | generate-command)
+describe | entries | list-entries | list-commands | command-line | generate-command | purge)
   "$@"
   exit
   ;;
 esac
 
-touch "$HIST_FILE"
-readarray HIST_LINES <"$HIST_FILE"
 FZFPIPE=$(mktemp -u)
 mkfifo "$FZFPIPE"
 trap 'rm "$FZFPIPE"' EXIT INT
@@ -149,28 +178,11 @@ trap 'rm "$FZFPIPE"' EXIT INT
 # Append Launcher History, removing usage count
 (printf '%s' "${HIST_LINES[@]#* }" >>"$FZFPIPE") &
 
-# Load and append Desktop entries
-(
-for i in "${!DIRS[@]}"; do
-  if [[ ! -d "${DIRS[i]}" ]]; then
-    unset -v 'DIRS[$i]'
-  else
-    DIRS[$i]="${DIRS[i]}/applications/**/*.desktop"
-  fi
+# Iterate over providers and run their list-command
+for PROVIDER in "${PROVIDERS[@]}"; do
+  readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDER}
+  (bash -c "${PROVIDER_ARGS[0]}" >>"$FZFPIPE") &
 done
-# shellcheck disable=SC2068
-entries ${DIRS[@]} >>"$FZFPIPE"
-) &
-
-# Load and append command list
-(
-  IFS=:
-  read -ra path <<<"$PATH"
-  for dir in "${path[@]}"; do
-    printf '%s\n' "$dir/"* |
-      awk -F / -v pre="$GLYPH_COMMAND" '{print $NF "\034command\034\033[31m" pre "\033[0m" $NF;}'
-  done | sort -u >>"$FZFPIPE"
-) &
 
 COMMAND_STR=$(
   fzf +s -x -d '\034' --nth ..3 --with-nth 3 \
@@ -200,13 +212,8 @@ command='echo "nope"'
 # shellcheck disable=SC2086
 readarray -d $'\034' -t PARAMS <<<${COMMAND_STR}
 # COMMAND_STR is "<string>\034<type>"
-case ${PARAMS[1]} in
-desktop)
-  command=$(generate-command "${PARAMS[0]}" "${PARAMS[3]}")
-  ;;
-command)
-  command="$TERMINAL_COMMAND ${PARAMS[0]}"
-  ;;
-esac
-
+# shellcheck disable=SC2086
+readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[${PARAMS[1]}]}
+# shellcheck disable=SC2086
+command=$(eval ${PROVIDER_ARGS[1]} ${PARAMS[0]} ${PARAMS[3]})
 (exec setsid /bin/sh -c "$command" &)
