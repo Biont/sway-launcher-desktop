@@ -22,7 +22,7 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/sway-launcher-desktop"
 # list_cmd,preview_cmd,launch_cmd
 declare -A PROVIDERS
 if [ -f "${CONFIG_DIR}/providers.conf" ]; then
-  PARSED=$( awk -F= '
+  PARSED=$(awk -F= '
   BEGINFILE{ provider=""; }
   /^\[.*\]/{sub("^\\[", "");sub("\\]$", "");provider=$0}
   /^(launch|list|preview)_cmd/{st = index($0,"=");providers[provider][$1] = substr($0,st+1)}
@@ -39,8 +39,8 @@ if [ -f "${CONFIG_DIR}/providers.conf" ]; then
   }' "${CONFIG_DIR}/providers.conf")
   eval "$PARSED"
 else
-  PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop '{1}'${DEL}${0} generate-command {1} {2}"
-  PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command {1}${DEL}${0} command-line {1}"
+  PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop '{1}'${DEL}${0} run-desktop '{1}' {2}"
+  PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command {1}${DEL}${TERMINAL_COMMAND} {1}"
 fi
 
 touch "$HIST_FILE"
@@ -143,7 +143,9 @@ function entries() {
     $@ </dev/null
   # the empty stdin is needed in case no *.desktop files
 }
-
+function run-desktop() {
+  bash -c "$("${0}" generate-command "$@")"
+}
 function generate-command() {
   # Define the search pattern that specifies the block to search for within the .desktop file
   PATTERN="^\\\\[Desktop Entry\\\\]"
@@ -196,7 +198,7 @@ function generate-command() {
 }
 
 case "$1" in
-describe | describe-desktop | describe-command | entries | list-entries | list-commands | command-line | generate-command | provide)
+describe | describe-desktop | describe-command | entries | list-entries | list-commands | command-line | generate-command | run-desktop | provide)
   "$@"
   exit
   ;;
@@ -238,15 +240,11 @@ fi
 
 printf '%s' "${HIST_LINES[@]}" | sort -nr >"$HIST_FILE"
 
-command='echo "nope"'
 # shellcheck disable=SC2086
 readarray -d $'\034' -t PARAMS <<<${COMMAND_STR}
-# COMMAND_STR is "<string>\034<type>"
 # shellcheck disable=SC2086
 readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[${PARAMS[1]}]}
 # Substitute {1}, {2} etc with the correct values
 COMMAND=${PROVIDER_ARGS[2]//\{1\}/${PARAMS[0]}}
 COMMAND=${COMMAND//\{2\}/${PARAMS[3]}}
-# shellcheck disable=SC2086
-command=$(bash -c ${COMMAND})
-(exec setsid /bin/sh -c "$command" &)
+(exec setsid /bin/sh -c "${COMMAND}" &)
