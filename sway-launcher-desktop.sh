@@ -43,8 +43,6 @@ if [ -f "${CONFIG_DIR}/providers.conf" ]; then
         print "PROVIDERS[\x27" key "\x27]=\x27" providers[key]["list_cmd"] "\034" providers[key]["preview_cmd"] "\034" providers[key]["launch_cmd"] "\x27\n"
     }
   }' "${CONFIG_DIR}/providers.conf")
-  echo "$PARSED"
-
   eval "$PARSED"
 else
   PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop${DEL}${0} generate-command"
