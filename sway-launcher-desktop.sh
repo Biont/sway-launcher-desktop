@@ -46,9 +46,6 @@ fi
 touch "$HIST_FILE"
 readarray HIST_LINES <"$HIST_FILE"
 
-function command-line() {
-  echo "${TERMINAL_COMMAND} ${1}"
-}
 function describe() {
   # shellcheck disable=SC2086
   readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[${1}]}
@@ -198,7 +195,7 @@ function generate-command() {
 }
 
 case "$1" in
-describe | describe-desktop | describe-command | entries | list-entries | list-commands | command-line | generate-command | run-desktop | provide)
+describe | describe-desktop | describe-command | entries | list-entries | list-commands | generate-command | run-desktop | provide)
   "$@"
   exit
   ;;
