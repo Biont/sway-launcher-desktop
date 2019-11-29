@@ -28,19 +28,13 @@ if [ -f "${CONFIG_DIR}/providers.conf" ]; then
   /^(launch|list|preview)_cmd/{st = index($0,"=");providers[provider][$1] = substr($0,st+1)}
   ENDFILE{
     for (key in providers){
-        if(!("list_cmd" in providers[key])){continue;}
-        if(!("launch_cmd" in providers[key])){continue;}
-        if(!("preview_cmd" in providers[key])){continue;}
-        for (entry in providers[key]){
-        #  gsub(/\$/,"\\$", providers[key][entry])
-        #  gsub(/"/,"\\\"", providers[key][entry])
-        #  gsub("\047",sq, providers[key][entry])
-      #    gsub("\x27",sq, providers[key][entry])
-     #     gsub(/\047/,sq, providers[key][entry])
-         gsub(/[\x27,\047]/,"\x27\"\x27\"\x27", providers[key][entry])
-        #  gsub(/\047/,"DURR", providers[key][entry])
-        }
-        print "PROVIDERS[\x27" key "\x27]=\x27" providers[key]["list_cmd"] "\034" providers[key]["preview_cmd"] "\034" providers[key]["launch_cmd"] "\x27\n"
+      if(!("list_cmd" in providers[key])){continue;}
+      if(!("launch_cmd" in providers[key])){continue;}
+      if(!("preview_cmd" in providers[key])){continue;}
+      for (entry in providers[key]){
+       gsub(/[\x27,\047]/,"\x27\"\x27\"\x27", providers[key][entry])
+      }
+      print "PROVIDERS[\x27" key "\x27]=\x27" providers[key]["list_cmd"] "\034" providers[key]["preview_cmd"] "\034" providers[key]["launch_cmd"] "\x27\n"
     }
   }' "${CONFIG_DIR}/providers.conf")
   eval "$PARSED"
