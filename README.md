@@ -32,3 +32,22 @@ bindsym $mod+d exec $menu
 
 ### Setup a Terminal command
 Some of your desktop entries will probably be TUI programs that expect to be launched in a new terminal window. Those entries have the `Terminal=true` flag set and you need to tell the launcher which terminal emulator to use. Pass the `TERMINAL_COMMAND` environment variable with your terminal startup command to the script to use your preferred terminal emulator. The script will default to `urxvt -e`
+
+## Extending the launcher
+
+In addition to desktop application entries and binaries, you can extend `sway-launcher-desktop` with custom item providers.
+If will read the configuration of custom item providers from `$HOME/.config/sway-launcher-desktop/providers.conf`
+The structure looks like this:
+
+```
+[my-provider]
+list_cmd=echo 'my-custom-entry\034 \034My custom provider'
+preview_cmd=echo 'This is the preview of {1}'
+launch_cmd=notify-send 'I am not launching {1}'
+```
+
+The `list_cmd` generated the list of entries. For each entry, it has to print the following columns, separated by the `\034` field separator character:
+1. The item to launch. This will get passed to `preview_cmd` and `launch_cmd` as `{1}`
+2. A glyph or any kind of prefix to differentiate your provider from others. Feel free to use ANSI escape codes for coloring it
+3. The text that appears in the `fzf` window
+4. (optional) Metadata that you can pass to `preview_cmd` and `launch_cmd` as `{2}`. For example, this is used to specify a specific Desktop Action inside a .desktop file
