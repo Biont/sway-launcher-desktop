@@ -41,8 +41,8 @@ The structure looks like this:
 
 ```
 [my-provider]
-list_cmd=echo 'my-custom-entry\034my-provider\034 \034My custom provider'
-preview_cmd=echo 'This is the preview of {1}'
+list_cmd=echo -e 'my-custom-entry\034my-provider\034  My custom provider'
+preview_cmd=echo -e 'This is the preview of {1}'
 launch_cmd=notify-send 'I am now launching {1}'
 ```
 
