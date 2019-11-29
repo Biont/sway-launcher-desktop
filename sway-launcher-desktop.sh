@@ -39,13 +39,10 @@ if [ -f "${CONFIG_DIR}/providers.conf" ]; then
   }' "${CONFIG_DIR}/providers.conf")
   eval "$PARSED"
 else
-  PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop${DEL}${0} generate-command"
-  PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command${DEL}${0} command-line"
+  PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop '{1}'${DEL}${0} generate-command {1} {2}"
+  PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command {1}${DEL}${0} command-line {1}"
 fi
-#for i in "${!PROVIDERS[@]}"; do
-#  echo "${i}=${PROVIDERS[$i]}"
-#done
-#exit
+
 touch "$HIST_FILE"
 readarray HIST_LINES <"$HIST_FILE"
 
@@ -56,7 +53,7 @@ function describe() {
   # shellcheck disable=SC2086
   readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[${1}]}
   # shellcheck disable=SC2086
-  [ -n "${PROVIDER_ARGS[1]}" ] && eval "${PROVIDER_ARGS[1]} ${2}"
+  [ -n "${PROVIDER_ARGS[1]}" ] && eval "${PROVIDER_ARGS[1]//\{1\}/${2}}"
 }
 function describe-desktop() {
   description=$(sed -ne '/^Comment=/{s/^Comment=//;p;q}' "$1")
@@ -247,6 +244,9 @@ readarray -d $'\034' -t PARAMS <<<${COMMAND_STR}
 # COMMAND_STR is "<string>\034<type>"
 # shellcheck disable=SC2086
 readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[${PARAMS[1]}]}
+# Substitute {1}, {2} etc with the correct values
+COMMAND=${PROVIDER_ARGS[2]//\{1\}/${PARAMS[0]}}
+COMMAND=${COMMAND//\{2\}/${PARAMS[3]}}
 # shellcheck disable=SC2086
-command=$(eval ${PROVIDER_ARGS[1]} ${PARAMS[0]} ${PARAMS[3]})
+command=$(bash -c ${COMMAND})
 (exec setsid /bin/sh -c "$command" &)
