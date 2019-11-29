@@ -43,7 +43,7 @@ The structure looks like this:
 [my-provider]
 list_cmd=echo 'my-custom-entry\034 \034My custom provider'
 preview_cmd=echo 'This is the preview of {1}'
-launch_cmd=notify-send 'I am not launching {1}'
+launch_cmd=notify-send 'I am now launching {1}'
 ```
 
 The `list_cmd` generated the list of entries. For each entry, it has to print the following columns, separated by the `\034` field separator character:
