@@ -22,7 +22,7 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/sway-launcher-desktop"
 # list_cmd,preview_cmd,launch_cmd
 declare -A PROVIDERS
 if [ -f "${CONFIG_DIR}/providers.conf" ]; then
-  PARSED=$(awk -F= '
+  eval "$(awk -F= '
   BEGINFILE{ provider=""; }
   /^\[.*\]/{sub("^\\[", "");sub("\\]$", "");provider=$0}
   /^(launch|list|preview)_cmd/{st = index($0,"=");providers[provider][$1] = substr($0,st+1)}
@@ -36,8 +36,7 @@ if [ -f "${CONFIG_DIR}/providers.conf" ]; then
       }
       print "PROVIDERS[\x27" key "\x27]=\x27" providers[key]["list_cmd"] "\034" providers[key]["preview_cmd"] "\034" providers[key]["launch_cmd"] "\x27\n"
     }
-  }' "${CONFIG_DIR}/providers.conf")
-  eval "$PARSED"
+  }' "${CONFIG_DIR}/providers.conf")"
 else
   PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop '{1}'${DEL}${0} run-desktop '{1}' {2}"
   PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command {1}${DEL}${TERMINAL_COMMAND} {1}"
@@ -58,11 +57,10 @@ function describe-desktop() {
   echo "${description:-No description}"
 }
 function describe-command() {
-  title=$1
   readarray arr < <(whatis -l "$1" 2>/dev/null)
   description="${arr[0]}"
   description="${description%*-}"
-  echo -e "\033[33m$title\033[0m"
+  echo -e "\033[33m${1}\033[0m"
   echo "${description:-No description}"
 }
 
@@ -82,7 +80,6 @@ function list-entries() {
   # Get locations of desktop application folders according to spec
   # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
   IFS=':' read -ra DIRS <<<"${XDG_DATA_HOME-${HOME}/.local/share}:${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
-
   for i in "${!DIRS[@]}"; do
     if [[ ! -d "${DIRS[i]}" ]]; then
       unset -v 'DIRS[$i]'
@@ -122,13 +119,7 @@ function entries() {
       a++;
       actions[a,"key"]=$0
     }
-    /^Name=/{
-    if(block=="action") {
-        actions[a,"name"]=$2;
-    } else {
-        name=$2
-    }
-    }
+    /^Name=/{ (block=="action")? actions[a,"name"]=$2 : name=$2 }
     ENDFILE{
       if (application){
           print FILENAME "\034desktop\034\033[33m" pre name "\033[0m";
@@ -157,18 +148,12 @@ function generate-command() {
   awk -v pattern="${PATTERN}" -v terminal_cmd="${TERMINAL_COMMAND}" -F= '
     BEGIN{a=0;exec=0;path=0}
        /^\[Desktop/{
-        if(a){
-          a=0
-        }
+        if(a){ a=0 }
        }
-      $0 ~ pattern{
-       a=1
-      }
+      $0 ~ pattern{ a=1 }
       /^Terminal=/{
         sub("^Terminal=", "");
-        if ($0 == "true") {
-          terminal=1
-        }
+        if ($0 == "true") { terminal=1 }
       }
       /^Exec=/{
         if(a && !exec){
@@ -178,18 +163,11 @@ function generate-command() {
         }
       }
       /^Path=/{
-        if(a && !path){
-          path=$2
-        }
+        if(a && !path){ path=$2 }
        }
-
     END{
-      if(path){
-        printf "cd " path " && "
-      }
-      if (terminal){
-        printf terminal_cmd " "
-      }
+      if(path){ printf "cd " path " && " }
+      if (terminal){ printf terminal_cmd " " }
       print exec
     }' "$1"
 }
