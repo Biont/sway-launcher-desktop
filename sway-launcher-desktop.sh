@@ -7,6 +7,7 @@ set -o pipefail
 # shellcheck disable=SC2154
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 IFS=$'\n\t'
+DEL=$'\34'
 
 # Defaulting terminal to urxvt, but feel free to either change
 # this or override with an environment variable in your sway config
@@ -15,25 +16,80 @@ TERMINAL_COMMAND="${TERMINAL_COMMAND:="urxvt -e"}"
 GLYPH_COMMAND="  "
 GLYPH_DESKTOP="  "
 HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/sway-launcher-desktop"
 
-# Get locations of desktop application folders according to spec
-# https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-IFS=':' read -ra DIRS <<< "${XDG_DATA_HOME-${HOME}/.local/share}:${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
+# Provider config entries are separated by the field separator \034 and have the following structure:
+# list_cmd,preview_cmd,launch_cmd
+declare -A PROVIDERS
+if [ -f "${CONFIG_DIR}/providers.conf" ]; then
+  eval "$(awk -F= '
+  BEGINFILE{ provider=""; }
+  /^\[.*\]/{sub("^\\[", "");sub("\\]$", "");provider=$0}
+  /^(launch|list|preview)_cmd/{st = index($0,"=");providers[provider][$1] = substr($0,st+1)}
+  ENDFILE{
+    for (key in providers){
+      if(!("list_cmd" in providers[key])){continue;}
+      if(!("launch_cmd" in providers[key])){continue;}
+      if(!("preview_cmd" in providers[key])){continue;}
+      for (entry in providers[key]){
+       gsub(/[\x27,\047]/,"\x27\"\x27\"\x27", providers[key][entry])
+      }
+      print "PROVIDERS[\x27" key "\x27]=\x27" providers[key]["list_cmd"] "\034" providers[key]["preview_cmd"] "\034" providers[key]["launch_cmd"] "\x27\n"
+    }
+  }' "${CONFIG_DIR}/providers.conf")"
+else
+  PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop '{1}'${DEL}${0} run-desktop '{1}' {2}"
+  PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command {1}${DEL}${TERMINAL_COMMAND} {1}"
+fi
+
+touch "$HIST_FILE"
+readarray HIST_LINES <"$HIST_FILE"
 
 function describe() {
-  if [[ $2 == 'command' ]]; then
-    title=$1
-    readarray arr < <(whatis -l "$1" 2>/dev/null)
-    description="${arr[0]}"
-    description="${description%*-}"
-  else
-    title=$(sed -ne '/^Name=/{s/^Name=//;p;q}' "$1")
-    description=$(sed -ne '/^Comment=/{s/^Comment=//;p;q}' "$1")
-  fi
-  echo -e "\033[33m$title\033[0m"
+  # shellcheck disable=SC2086
+  readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[${1}]}
+  # shellcheck disable=SC2086
+  [ -n "${PROVIDER_ARGS[1]}" ] && eval "${PROVIDER_ARGS[1]//\{1\}/${2}}"
+}
+function describe-desktop() {
+  description=$(sed -ne '/^Comment=/{s/^Comment=//;p;q}' "$1")
+  echo -e "\033[33m$(sed -ne '/^Name=/{s/^Name=//;p;q}' "$1")\033[0m"
+  echo "${description:-No description}"
+}
+function describe-command() {
+  readarray arr < <(whatis -l "$1" 2>/dev/null)
+  description="${arr[0]}"
+  description="${description%*-}"
+  echo -e "\033[33m${1}\033[0m"
   echo "${description:-No description}"
 }
 
+function provide() {
+  # shellcheck disable=SC2086
+  readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[$1]}
+  eval "${PROVIDER_ARGS[0]}"
+}
+function list-commands() {
+  IFS=: read -ra path <<<"$PATH"
+  for dir in "${path[@]}"; do
+    printf '%s\n' "$dir/"* |
+      awk -F / -v pre="$GLYPH_COMMAND" '{print $NF "\034command\034\033[31m" pre "\033[0m" $NF;}'
+  done | sort -u
+}
+function list-entries() {
+  # Get locations of desktop application folders according to spec
+  # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+  IFS=':' read -ra DIRS <<<"${XDG_DATA_HOME-${HOME}/.local/share}:${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
+  for i in "${!DIRS[@]}"; do
+    if [[ ! -d "${DIRS[i]}" ]]; then
+      unset -v 'DIRS[$i]'
+    else
+      DIRS[$i]="${DIRS[i]}/applications/**/*.desktop"
+    fi
+  done
+  # shellcheck disable=SC2068
+  entries ${DIRS[@]}
+}
 function entries() {
   # shellcheck disable=SC2068
   awk -v pre="$GLYPH_DESKTOP" -F= '
@@ -63,13 +119,7 @@ function entries() {
       a++;
       actions[a,"key"]=$0
     }
-    /^Name=/{
-    if(block=="action") {
-        actions[a,"name"]=$2;
-    } else {
-        name=$2
-    }
-    }
+    /^Name=/{ (block=="action")? actions[a,"name"]=$2 : name=$2 }
     ENDFILE{
       if (application){
           print FILENAME "\034desktop\034\033[33m" pre name "\033[0m";
@@ -81,7 +131,9 @@ function entries() {
     $@ </dev/null
   # the empty stdin is needed in case no *.desktop files
 }
-
+function run-desktop() {
+  bash -c "$("${0}" generate-command "$@")"
+}
 function generate-command() {
   # Define the search pattern that specifies the block to search for within the .desktop file
   PATTERN="^\\\\[Desktop Entry\\\\]"
@@ -93,21 +145,15 @@ function generate-command() {
   # 3. We see an Exec= line during search: remove field codes and set variable
   # 3. We see a Path= line during search: set variable
   # 4. Finally, build command line
-  awk -v pattern="${PATTERN}" -v terminal_command="${TERMINAL_COMMAND}" -F= '
+  awk -v pattern="${PATTERN}" -v terminal_cmd="${TERMINAL_COMMAND}" -F= '
     BEGIN{a=0;exec=0;path=0}
        /^\[Desktop/{
-        if(a){
-          a=0
-        }
+        if(a){ a=0 }
        }
-      $0 ~ pattern{
-       a=1
-      }
+      $0 ~ pattern{ a=1 }
       /^Terminal=/{
         sub("^Terminal=", "");
-        if ($0 == "true") {
-          terminal=1
-        }
+        if ($0 == "true") { terminal=1 }
       }
       /^Exec=/{
         if(a && !exec){
@@ -117,31 +163,22 @@ function generate-command() {
         }
       }
       /^Path=/{
-        if(a && !path){
-          path=$2
-        }
+        if(a && !path){ path=$2 }
        }
-
     END{
-      if(path){
-        printf "cd " path " && "
-      }
-      if (terminal){
-        printf terminal_command " "
-      }
+      if(path){ printf "cd " path " && " }
+      if (terminal){ printf terminal_cmd " " }
       print exec
     }' "$1"
 }
 
 case "$1" in
-describe | entries | generate-command)
+describe | describe-desktop | describe-command | entries | list-entries | list-commands | generate-command | run-desktop | provide)
   "$@"
   exit
   ;;
 esac
 
-touch "$HIST_FILE"
-readarray HIST_LINES <"$HIST_FILE"
 FZFPIPE=$(mktemp -u)
 mkfifo "$FZFPIPE"
 trap 'rm "$FZFPIPE"' EXIT INT
@@ -149,32 +186,14 @@ trap 'rm "$FZFPIPE"' EXIT INT
 # Append Launcher History, removing usage count
 (printf '%s' "${HIST_LINES[@]#* }" >>"$FZFPIPE") &
 
-# Load and append Desktop entries
-(
-for i in "${!DIRS[@]}"; do
-  if [[ ! -d "${DIRS[i]}" ]]; then
-    unset -v 'DIRS[$i]'
-  else
-    DIRS[$i]="${DIRS[i]}/applications/**/*.desktop"
-  fi
+# Iterate over providers and run their list-command
+for PROVIDER_NAME in "${!PROVIDERS[@]}"; do
+  (bash -c "${0} provide ${PROVIDER_NAME}" >>"$FZFPIPE") &
 done
-# shellcheck disable=SC2068
-entries ${DIRS[@]} >>"$FZFPIPE"
-) &
-
-# Load and append command list
-(
-  IFS=:
-  read -ra path <<<"$PATH"
-  for dir in "${path[@]}"; do
-    printf '%s\n' "$dir/"* |
-      awk -F / -v pre="$GLYPH_COMMAND" '{print $NF "\034command\034\033[31m" pre "\033[0m" $NF;}'
-  done | sort -u >>"$FZFPIPE"
-) &
 
 COMMAND_STR=$(
   fzf +s -x -d '\034' --nth ..3 --with-nth 3 \
-    --preview "$0 describe {1} {2}" \
+    --preview "$0 describe {2} {1}" \
     --preview-window=up:3:wrap --ansi \
     <"$FZFPIPE"
 ) || exit 1
@@ -196,17 +215,11 @@ fi
 
 printf '%s' "${HIST_LINES[@]}" | sort -nr >"$HIST_FILE"
 
-command='echo "nope"'
 # shellcheck disable=SC2086
 readarray -d $'\034' -t PARAMS <<<${COMMAND_STR}
-# COMMAND_STR is "<string>\034<type>"
-case ${PARAMS[1]} in
-desktop)
-  command=$(generate-command "${PARAMS[0]}" "${PARAMS[3]}")
-  ;;
-command)
-  command="$TERMINAL_COMMAND ${PARAMS[0]}"
-  ;;
-esac
-
-(exec setsid /bin/sh -c "$command" &)
+# shellcheck disable=SC2086
+readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[${PARAMS[1]}]}
+# Substitute {1}, {2} etc with the correct values
+COMMAND=${PROVIDER_ARGS[2]//\{1\}/${PARAMS[0]}}
+COMMAND=${COMMAND//\{2\}/${PARAMS[3]}}
+(exec setsid /bin/sh -c "${COMMAND}" &)
