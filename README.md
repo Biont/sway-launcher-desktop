@@ -36,7 +36,7 @@ Some of your desktop entries will probably be TUI programs that expect to be lau
 ## Extending the launcher
 
 In addition to desktop application entries and binaries, you can extend `sway-launcher-desktop` with custom item providers.
-If will read the configuration of custom item providers from `$HOME/.config/sway-launcher-desktop/providers.conf`.
+It will read the configuration of custom item providers from `$HOME/.config/sway-launcher-desktop/providers.conf`.
 The structure looks like this:
 
 ```
