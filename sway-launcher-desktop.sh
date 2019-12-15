@@ -222,4 +222,4 @@ readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[${PARAMS[1]}]}
 # Substitute {1}, {2} etc with the correct values
 COMMAND=${PROVIDER_ARGS[2]//\{1\}/${PARAMS[0]}}
 COMMAND=${COMMAND//\{2\}/${PARAMS[3]}}
-(exec setsid /bin/sh -c "${COMMAND}" &)
+(exec setsid /bin/sh -c "${COMMAND}" &>/dev/null &)
