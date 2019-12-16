@@ -59,7 +59,7 @@ function describe-desktop() {
 function describe-command() {
   readarray arr < <(whatis -l "$1" 2>/dev/null)
   description="${arr[0]}"
-  description="${description%*-}"
+  description="${description#* - }"
   echo -e "\033[33m${1}\033[0m"
   echo "${description:-No description}"
 }
