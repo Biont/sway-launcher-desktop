@@ -48,7 +48,7 @@ else
   HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 fi
 
-touch "$HIST_FILE"
+mkdir -p "${HIST_FILE%/*}" && touch "$HIST_FILE"
 readarray HIST_LINES <"$HIST_FILE"
 
 function describe() {
