@@ -1,4 +1,4 @@
-# sway-launcher-desktop [![Build Status](https://github.com/Biont/sway-launcher-desktop/workflows/CI/badge.svg)
+# sway-launcher-desktop ![Build Status](https://github.com/Biont/sway-launcher-desktop/workflows/CI/badge.svg)
 
 ![screenshot_2019-10-25-213740](https://user-images.githubusercontent.com/4208996/67599848-3a1f3680-f771-11e9-9715-da6e943ae14e.png)
 
