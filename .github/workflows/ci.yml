@@ -5,11 +5,6 @@ jobs:
     name: build
     runs-on: ubuntu-latest
     steps:
-      - name: Setup BATS
-        uses: mig4/setup-bats@master
-        with:
-          bats-version: 1.1.0
-
       - name: Check out code
         uses: actions/checkout@v1
 
