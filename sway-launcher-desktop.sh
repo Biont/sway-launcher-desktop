@@ -15,13 +15,17 @@ DEL=$'\34'
 TERMINAL_COMMAND="${TERMINAL_COMMAND:="urxvt -e"}"
 GLYPH_COMMAND="  "
 GLYPH_DESKTOP="  "
-HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/sway-launcher-desktop"
+PROVIDERS_FILE="${PROVIDERS_FILE:=providers.conf}"
+if [[ "${PROVIDERS_FILE#/}" == "${PROVIDERS_FILE}" ]]; then
+    # $PROVIDERS_FILE is a relative path, prepend $CONFIG_DIR
+    PROVIDERS_FILE="${CONFIG_DIR}/${PROVIDERS_FILE}"
+fi
 
 # Provider config entries are separated by the field separator \034 and have the following structure:
 # list_cmd,preview_cmd,launch_cmd
 declare -A PROVIDERS
-if [ -f "${CONFIG_DIR}/providers.conf" ]; then
+if [ -f "${PROVIDERS_FILE}" ]; then
   eval "$(awk -F= '
   BEGINFILE{ provider=""; }
   /^\[.*\]/{sub("^\\[", "");sub("\\]$", "");provider=$0}
@@ -36,10 +40,12 @@ if [ -f "${CONFIG_DIR}/providers.conf" ]; then
       }
       print "PROVIDERS[\x27" key "\x27]=\x27" providers[key]["list_cmd"] "\034" providers[key]["preview_cmd"] "\034" providers[key]["launch_cmd"] "\x27\n"
     }
-  }' "${CONFIG_DIR}/providers.conf")"
+  }' "${PROVIDERS_FILE}")"
+  HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-${PROVIDERS_FILE##*/}-history.txt"
 else
   PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop '{1}'${DEL}${0} run-desktop '{1}' {2}"
   PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command {1}${DEL}${TERMINAL_COMMAND} {1}"
+  HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 fi
 
 touch "$HIST_FILE"
@@ -59,7 +65,7 @@ function describe-desktop() {
 function describe-command() {
   readarray arr < <(whatis -l "$1" 2>/dev/null)
   description="${arr[0]}"
-  description="${description%*-}"
+  description="${description#* - }"
   echo -e "\033[33m${1}\033[0m"
   echo "${description:-No description}"
 }
@@ -222,4 +228,4 @@ readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[${PARAMS[1]}]}
 # Substitute {1}, {2} etc with the correct values
 COMMAND=${PROVIDER_ARGS[2]//\{1\}/${PARAMS[0]}}
 COMMAND=${COMMAND//\{2\}/${PARAMS[3]}}
-(exec setsid /bin/sh -c "${COMMAND}" &)
+(exec setsid /bin/sh -c "${COMMAND}" &>/dev/null &)

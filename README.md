@@ -55,3 +55,6 @@ The `list_cmd` generated the list of entries. For each entry, it has to print th
 The `preview_cmd` renders the contents of the `fzf` preview panel. You can use the template variable `{1}` in your command, which will be substituted with the value of the selected item.
 
 The `launch_cmd` is fired when the user has selected one of the provider's entries.
+
+Note: Pass the environment variable `PROVIDERS_FILE` to read custom providers from another file than the default `providers.conf`.
+The path in `PROVIDERS_FILE` can either be absolute or relative to `${HOME}/.config/sway-launcher-desktop/`.
