@@ -15,6 +15,9 @@ jobs:
 
       - name: shellcheck
         uses: ludeeus/action-shellcheck@0.1.0
-
+        
+      - name: Install BATS
+        run: sudo npm install -g bats
+        
       - name: Test
         run: cd tests && bats *.bats
