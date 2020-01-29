@@ -16,7 +16,7 @@ Despite its name, it does not (read: no longer) depend on the Sway window manage
 ## Installation
 
 Make sure you have `fzf` installed and download this repository. 
-Arch Linux used can also grab it from the AUR (thanks @turtlewit)
+Arch Linux users can also grab it from the AUR (thanks @turtlewit)
 
 * [sway-launcher-desktop](https://aur.archlinux.org/packages/sway-launcher-desktop/)
 * [sway-launcher-desktop-git](https://aur.archlinux.org/packages/sway-launcher-desktop-git/)
