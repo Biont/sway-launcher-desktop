@@ -1,3 +1,7 @@
+setup() {
+   export TERMINAL_COMMAND='urxvt -e'
+}
+
 @test "Exec command is properly extracted from Firefox desktop file" {
   run ../sway-launcher-desktop.sh generate-command data/desktop-files/0/applications/firefox.desktop
   [ "$status" -eq 0 ]
@@ -6,8 +10,11 @@
 
 @test "Exec command is properly generated from htop desktop file" {
   run ../sway-launcher-desktop.sh generate-command data/desktop-files/0/applications/htop.desktop
+  expected='urxvt -e htop'
+  echo "EXPECTED: $expected"
+  echo "ACTUAL: $output"
   [ "$status" -eq 0 ]
-  [[ "$output" ==  'urxvt -e htop' ]]
+  [[ "$output" ==  $expected ]]
 }
 
 @test "Exec command is properly generated from minecraft-launcher desktop file" {

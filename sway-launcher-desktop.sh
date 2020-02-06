@@ -18,8 +18,8 @@ GLYPH_DESKTOP="  "
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/sway-launcher-desktop"
 PROVIDERS_FILE="${PROVIDERS_FILE:=providers.conf}"
 if [[ "${PROVIDERS_FILE#/}" == "${PROVIDERS_FILE}" ]]; then
-    # $PROVIDERS_FILE is a relative path, prepend $CONFIG_DIR
-    PROVIDERS_FILE="${CONFIG_DIR}/${PROVIDERS_FILE}"
+  # $PROVIDERS_FILE is a relative path, prepend $CONFIG_DIR
+  PROVIDERS_FILE="${CONFIG_DIR}/${PROVIDERS_FILE}"
 fi
 
 # Provider config entries are separated by the field separator \034 and have the following structure:
@@ -178,8 +178,56 @@ function generate-command() {
     }' "$1"
 }
 
+function autostart() {
+  for application in $(list-autostart); do
+    (exec setsid /bin/sh -c "$(run-desktop "${application}")" &>/dev/null &)
+  done
+}
+
+function list-autostart() {
+  # Get locations of desktop application folders according to spec
+  # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+  IFS=':' read -ra DIRS <<<"${XDG_CONFIG_HOME-${HOME}/.config}:${XDG_CONFIG_DIRS-/etc/xdg}"
+  for i in "${!DIRS[@]}"; do
+    if [[ ! -d "${DIRS[i]}" ]]; then
+      unset -v 'DIRS[$i]'
+    else
+      DIRS[$i]="${DIRS[i]}/autostart/*.desktop"
+    fi
+  done
+
+  # shellcheck disable=SC2068
+  awk -v pre="$GLYPH_DESKTOP" -F= '
+    function desktopFileID(filename){
+      sub("^.*autostart/", "", filename);
+      sub("/", "-", filename);
+      return filename
+    }
+    BEGINFILE{
+      application=0;
+      block="";
+      a=0
+
+      id=desktopFileID(FILENAME)
+      if(id in fileIds){
+        nextfile;
+      }else{
+        fileIds[id]=0
+      }
+    }
+    /^\[Desktop Entry\]/{block="entry"}
+    /^Type=Application/{application=1}
+    /^Name=/{ iname=$2 }
+    ENDFILE{
+      if (application){
+          print FILENAME;
+      }
+    }' \
+    ${DIRS[@]} </dev/null
+}
+
 case "$1" in
-describe | describe-desktop | describe-command | entries | list-entries | list-commands | generate-command | run-desktop | provide)
+describe | describe-desktop | describe-command | entries | list-entries | list-commands | list-autostart | generate-command | autostart | run-desktop | provide)
   "$@"
   exit
   ;;
