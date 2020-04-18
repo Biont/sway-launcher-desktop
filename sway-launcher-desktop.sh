@@ -144,7 +144,7 @@ function generate-command() {
   # Define the search pattern that specifies the block to search for within the .desktop file
   PATTERN="^\\\\[Desktop Entry\\\\]"
   if [[ -n $2 ]]; then
-    PATTERN="^\\\\[Desktop Action ${2%?}\\\\]"
+    PATTERN="^\\\\[Desktop Action ${2}\\\\]"
   fi
   # 1. We see a line starting [Desktop, but we're already searching: deactivate search again
   # 2. We see the specified pattern: start search
