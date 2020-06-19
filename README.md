@@ -62,3 +62,8 @@ The `launch_cmd` is fired when the user has selected one of the provider's entri
 
 Note: Pass the environment variable `PROVIDERS_FILE` to read custom providers from another file than the default `providers.conf`.
 The path in `PROVIDERS_FILE` can either be absolute or relative to `${HOME}/.config/sway-launcher-desktop/`.
+
+
+## Troubleshooting
+
+Debug information is directed to file descriptor `3` and can be dumped using `./sway-launcher-desktop.sh 3>> ~/sway-launcher-desktop.log`

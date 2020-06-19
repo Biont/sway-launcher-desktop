@@ -138,7 +138,9 @@ function entries() {
   # the empty stdin is needed in case no *.desktop files
 }
 function run-desktop() {
-  bash -c "$("${0}" generate-command "$@")"
+  CMD="$("${0}" generate-command "$@")"
+  echo "Generated Launch command from .desktop file: ${CMD}" >&3
+  bash -c "${CMD}"
 }
 function generate-command() {
   # Define the search pattern that specifies the block to search for within the .desktop file
@@ -232,6 +234,7 @@ describe | describe-desktop | describe-command | entries | list-entries | list-c
   exit
   ;;
 esac
+echo "Starting launcher instance with the following providers:" "${!PROVIDERS[@]}" >&3
 
 FZFPIPE=$(mktemp -u)
 mkfifo "$FZFPIPE"
@@ -276,4 +279,6 @@ readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[${PARAMS[1]}]}
 # Substitute {1}, {2} etc with the correct values
 COMMAND=${PROVIDER_ARGS[2]//\{1\}/${PARAMS[0]}}
 COMMAND=${COMMAND//\{2\}/${PARAMS[3]}}
+COMMAND=${COMMAND%%[[:space:]]}
+echo "Launching command: ${COMMAND}" >&3
 (exec setsid /bin/sh -c "${COMMAND}" &>/dev/null &)
