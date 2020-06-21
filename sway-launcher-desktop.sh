@@ -44,8 +44,8 @@ if [ -f "${PROVIDERS_FILE}" ]; then
   }' "${PROVIDERS_FILE}")"
   HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-${PROVIDERS_FILE##*/}-history.txt"
 else
-  PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop '{1}'${DEL}${0} run-desktop '{1}' {2}"
-  PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command {1}${DEL}${TERMINAL_COMMAND} {1}"
+  PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop \"{1}\"${DEL}${0} run-desktop '{1}' {2}"
+  PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command \"{1}\"${DEL}${TERMINAL_COMMAND} {1}"
   HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
 fi
 
