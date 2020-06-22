@@ -11,12 +11,12 @@
 @test "Wildcard expansion works for extraction of desktop files" {
   run ../sway-launcher-desktop.sh entries data/desktop-files/0/applications/*.desktop
   [ "$status" -eq 0 ]
-  [[ ${#lines[@]} ==  5 ]]
+  [[ ${#lines[@]} ==  6 ]]
 }
 
 @test "Reoccurring desktop file ids are not parsed twice" {
   run ../sway-launcher-desktop.sh entries data/desktop-files/**/*.desktop
     echo "EXPECTED: foo-bar.desktop ACTUAL: $output"
   [ "$status" -eq 0 ]
-  [[ ${#lines[@]} ==  5 ]]
+  [[ ${#lines[@]} ==  6 ]]
 }
