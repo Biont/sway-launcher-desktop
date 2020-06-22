@@ -2,7 +2,7 @@
 Type=Application
 Version=1.0
 Name=Sid Meier's Civilization IV
-Comment=Official Minecraft Launcher
+Comment=Play Civ5
 Exec=echo foo
 Terminal=false
 Categories=Game;Application;
