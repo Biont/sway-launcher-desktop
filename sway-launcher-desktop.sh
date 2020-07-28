@@ -4,7 +4,9 @@
 # https://gist.github.com/Biont/40ef59652acf3673520c7a03c9f22d2a
 shopt -s nullglob globstar
 set -o pipefail
-exec 3<> "$(mktemp -u)"
+if ! { exec 0>&3; } 1>/dev/null 2>&1; then
+   exec 3>/dev/null
+fi
 # shellcheck disable=SC2154
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 IFS=$'\n\t'
