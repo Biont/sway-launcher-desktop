@@ -151,6 +151,7 @@ function generate-command() {
   if [[ -n $2 ]]; then
     PATTERN="^\\\\[Desktop Action ${2}\\\\]"
   fi
+  echo "Searching for pattern: ${PATTERN}" >&3
   # 1. We see a line starting [Desktop, but we're already searching: deactivate search again
   # 2. We see the specified pattern: start search
   # 3. We see an Exec= line during search: remove field codes and set variable
