@@ -141,7 +141,7 @@ function entries() {
   # the empty stdin is needed in case no *.desktop files
 }
 function run-desktop() {
-  CMD="$("${0}" generate-command "$@")"
+  CMD="$("${0}" generate-command "$@" 2>&3)"
   echo "Generated Launch command from .desktop file: ${CMD}" >&3
   bash -c "${CMD}"
 }
