@@ -285,4 +285,5 @@ COMMAND=${PROVIDER_ARGS[2]//\{1\}/${PARAMS[0]}}
 COMMAND=${COMMAND//\{2\}/${PARAMS[3]}}
 COMMAND=${COMMAND%%[[:space:]]}
 echo "Launching command: ${COMMAND}" >&3
-(exec setsid /bin/sh -c "${COMMAND}" &>/dev/null &)
+setsid /bin/sh -c "${COMMAND}"  >& /dev/null < /dev/null &
+sleep 0.01
