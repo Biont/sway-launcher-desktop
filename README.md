@@ -8,8 +8,9 @@ Despite its name, it does not (read: no longer) depend on the Sway window manage
 ## Features
 - Lists and executes available binaries
 - Lists and executes .desktop files (entries as well as actions)
+- Does not depend on `xdg-utils`. Just pure bash and `awk`
 - Shows a preview window containing `whatis` info of binaries and the `Comment=` section of .desktop files
-- History support which will highlight recently used entries. (Inspired by [this nice script which inspired me to create my own](https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher))
+- History support which will highlight recently used entries
 - Colored output and glyphs for the different entry types
 - Entries are lazily piped into fzf eliminating any lag during startup
 - Optional support for the XDG Autostart specification
@@ -32,7 +33,7 @@ bindsym $mod+d exec $menu
 
 
 ### Setup a Terminal command
-Some of your desktop entries will probably be TUI programs that expect to be launched in a new terminal window. Those entries have the `Terminal=true` flag set and you need to tell the launcher which terminal emulator to use. Pass the `TERMINAL_COMMAND` environment variable with your terminal startup command to the script to use your preferred terminal emulator. The script will default to `urxvt -e`
+Some of your desktop entries will probably be TUI programs that expect to be launched in a new terminal window. Those entries have the `Terminal=true` flag set and you need to tell the launcher which terminal emulator to use. Pass the `TERMINAL_COMMAND` environment variable with your terminal startup command to the script to use your preferred terminal emulator. The script will default to `$TERM -e`
 
 ### Configure application autostart
 If you want to be able to autostart applications , this script provides a function to handle them for you. Simply run `sway-launcher-desktop.sh autostart` in your `.bashrc`, at the end of your i3/sway config, or wherever else you deem fit.
