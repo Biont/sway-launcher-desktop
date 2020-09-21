@@ -41,15 +41,21 @@ if [ -f "${PROVIDERS_FILE}" ]; then
       print "PROVIDERS[\x27" key "\x27]=\x27" providers[key]["list_cmd"] "\034" providers[key]["preview_cmd"] "\034" providers[key]["launch_cmd"] "\x27\n"
     }
   }' "${PROVIDERS_FILE}")"
-  HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-${PROVIDERS_FILE##*/}-history.txt"
+  if [[ ! -v HIST_FILE ]]; then
+    HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-${PROVIDERS_FILE##*/}-history.txt"
+  fi
 else
   PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop \"{1}\"${DEL}${0} run-desktop '{1}' {2}"
   PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command \"{1}\"${DEL}${TERMINAL_COMMAND} {1}"
-  HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
+  if [[ ! -v HIST_FILE ]]; then
+    HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
+  fi
 fi
 
-mkdir -p "${HIST_FILE%/*}" && touch "$HIST_FILE"
-readarray HIST_LINES <"$HIST_FILE"
+if [[ -n "${HIST_FILE}" ]]; then
+  mkdir -p "${HIST_FILE%/*}" && touch "$HIST_FILE"
+  readarray HIST_LINES <"$HIST_FILE"
+fi
 
 function describe() {
   # shellcheck disable=SC2086
@@ -258,20 +264,22 @@ COMMAND_STR=$(
 
 [ -z "$COMMAND_STR" ] && exit 1
 
-# update history
-for i in "${!HIST_LINES[@]}"; do
-  if [[ "${HIST_LINES[i]}" == *" $COMMAND_STR"$'\n' ]]; then
-    HIST_COUNT=${HIST_LINES[i]%% *}
-    HIST_LINES[$i]="$((HIST_COUNT + 1)) $COMMAND_STR"$'\n'
-    match=1
-    break
+if [[ -n "${HIST_FILE}" ]]; then
+  # update history
+  for i in "${!HIST_LINES[@]}"; do
+    if [[ "${HIST_LINES[i]}" == *" $COMMAND_STR"$'\n' ]]; then
+      HIST_COUNT=${HIST_LINES[i]%% *}
+      HIST_LINES[$i]="$((HIST_COUNT + 1)) $COMMAND_STR"$'\n'
+      match=1
+      break
+    fi
+  done
+  if ! ((match)); then
+    HIST_LINES+=("1 $COMMAND_STR"$'\n')
   fi
-done
-if ! ((match)); then
-  HIST_LINES+=("1 $COMMAND_STR"$'\n')
-fi
 
-printf '%s' "${HIST_LINES[@]}" | sort -nr >"$HIST_FILE"
+  printf '%s' "${HIST_LINES[@]}" | sort -nr >"$HIST_FILE"
+fi
 
 # shellcheck disable=SC2086
 readarray -d $'\034' -t PARAMS <<<${COMMAND_STR}

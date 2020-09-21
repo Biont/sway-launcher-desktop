@@ -65,6 +65,13 @@ Note: Pass the environment variable `PROVIDERS_FILE` to read custom providers fr
 The path in `PROVIDERS_FILE` can either be absolute or relative to `${HOME}/.config/sway-launcher-desktop/`.
 
 
+## Launcher history file
+
+By default, `sway-launcher-desktop` stores a history of commands to make frequently used entries available more quickly.
+This history is stored in a file in `~/.cache/` (or `$XDG_CACHE_HOME`, if that environment variable is set).
+You may change the file path and name by setting the environment variable `HIST_FILE` to the desired path.
+Setting the variable to an empty value disables the history feature entirely.
+
 ## Troubleshooting
 
 Debug information is directed to file descriptor `3` and can be dumped using `./sway-launcher-desktop.sh 3>> ~/sway-launcher-desktop.log`
