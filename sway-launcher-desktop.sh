@@ -257,12 +257,21 @@ done
 
 COMMAND_STR=$(
   fzf +s -x -d '\034' --nth ..3 --with-nth 3 \
+    --print-query \
     --preview "$0 describe {2} {1}" \
     --preview-window=up:3:wrap --ansi \
-    <"$FZFPIPE"
-) || exit 1
+    <"$FZFPIPE" 
+) || true
 
-[ -z "$COMMAND_STR" ] && exit 1
+LINE_COUNT=$(echo "$COMMAND_STR" | wc -l)
+if [ $LINE_COUNT = 2 ]; then
+    QUERY_STR=$(echo "$COMMAND_STR" | head -1 )
+    COMMAND_STR=$(echo "$COMMAND_STR" | tail -n +2 | xargs)
+fi
+if [ $LINE_COUNT = 1 ]; then
+    [ -z "$COMMAND_STR" ] && exit 1
+    COMMAND_STR="$COMMAND_STR"$'\034command\034'"$COMMAND_STR"$'\034'
+fi
 
 if [[ -n "${HIST_FILE}" ]]; then
   # update history
