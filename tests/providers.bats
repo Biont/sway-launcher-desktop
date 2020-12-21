@@ -1,3 +1,5 @@
+#!/usr/bin/env bats
+
 @test "Builtin desktop provider works" {
   run  env XDG_CONFIG_HOME=./data/config XDG_DATA_HOME=./data/desktop-files/1 XDG_DATA_DIRS=./data/desktop-files/0 ../sway-launcher-desktop.sh provide desktop
   echo  "OUTPUT:$output"

@@ -1,3 +1,5 @@
+#!/usr/bin/env bats
+
 setup() {
    export TERMINAL_COMMAND='urxvt -e'
    export XDG_CONFIG_HOME=./data/autostart-folders/0
