@@ -13,8 +13,12 @@ IFS=$'\n\t'
 DEL=$'\34'
 
 TERMINAL_COMMAND="${TERMINAL_COMMAND:="$TERM -e"}"
-GLYPH_COMMAND="  "
-GLYPH_DESKTOP="  "
+if [[ -n $GLYPH_COMMAND ]]; then
+  GLYPH_COMMAND="  "
+fi
+if [[ -n $GLYPH_DESKTOP ]]; then
+  GLYPH_DESKTOP="  "
+fi
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/sway-launcher-desktop"
 PROVIDERS_FILE="${PROVIDERS_FILE:=providers.conf}"
 if [[ "${PROVIDERS_FILE#/}" == "${PROVIDERS_FILE}" ]]; then
@@ -259,6 +263,7 @@ COMMAND_STR=$(
   fzf +s -x -d '\034' --nth ..3 --with-nth 3 \
     --preview "$0 describe {2} {1}" \
     --preview-window=up:3:wrap --ansi \
+    --no-info --margin="3%" --cycle \
     <"$FZFPIPE"
 ) || exit 1
 
