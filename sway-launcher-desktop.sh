@@ -259,7 +259,7 @@ COMMAND_STR=$(
   fzf --ansi +s -x -d '\034' --nth ..3 --with-nth 3 \
     --preview "$0 describe {2} {1}" \
     --preview-window=up:2:noborder \
-    --no-mouse --no-multi --cycle \
+    --no-multi --cycle \
     --prompt="${GLYPH_PROMPT-# }" \
     --header='' --no-info --margin='1,2' \
     --color='16,gutter:-1' \
