@@ -13,12 +13,8 @@ IFS=$'\n\t'
 DEL=$'\34'
 
 TERMINAL_COMMAND="${TERMINAL_COMMAND:="$TERM -e"}"
-if [[ -n $GLYPH_COMMAND ]]; then
-  GLYPH_COMMAND="  "
-fi
-if [[ -n $GLYPH_DESKTOP ]]; then
-  GLYPH_DESKTOP="  "
-fi
+GLYPH_COMMAND="${GLYPH_COMMAND-  }"
+GLYPH_DESKTOP="${GLYPH_DESKTOP-  }"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/sway-launcher-desktop"
 PROVIDERS_FILE="${PROVIDERS_FILE:=providers.conf}"
 if [[ "${PROVIDERS_FILE#/}" == "${PROVIDERS_FILE}" ]]; then
