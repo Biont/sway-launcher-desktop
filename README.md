@@ -25,12 +25,15 @@ Arch Linux users can also grab it from the AUR (thanks @turtlewit)
 
 Configure it in Sway like this:
 ```
-for_window [class="URxvt" instance="launcher"] floating enable, border pixel 10, sticky enable
-set $menu exec urxvt -geometry 55x18 -name launcher -e env TERMINAL_COMMAND="urxvt -e" /path/to/repo/sway-launcher-desktop.sh
+for_window [app_id="^launcher$"] floating enable, sticky enable, resize set 30 ppt 60 ppt, border pixel 10
+set $menu exec $term --class=launcher -e /path/to/repo/sway-launcher-desktop.sh
 bindsym $mod+d exec $menu
 ```
 
-
+You can override the default icons/glyphs by setting the appropriate GLYPH_ variable in your $menu command, e.g.:
+```
+set $menu exec $term --class=launcher -e env GLYPH_COMMAND="" GLYPH_DESKTOP="" GLYPH_PROMPT="? " sway-launcher
+```
 
 ### Setup a Terminal command
 Some of your desktop entries will probably be TUI programs that expect to be launched in a new terminal window. Those entries have the `Terminal=true` flag set and you need to tell the launcher which terminal emulator to use. Pass the `TERMINAL_COMMAND` environment variable with your terminal startup command to the script to use your preferred terminal emulator. The script will default to `$TERM -e`

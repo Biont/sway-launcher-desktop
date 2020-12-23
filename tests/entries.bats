@@ -1,3 +1,5 @@
+#!/usr/bin/env bats
+
 @test "Firefox desktop entry and all its actions are extracted" {
   run ../sway-launcher-desktop.sh entries data/desktop-files/0/applications/firefox.desktop
   echo -e "OUTPUT:\n$output"
