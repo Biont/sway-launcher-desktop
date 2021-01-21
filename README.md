@@ -12,7 +12,7 @@ Despite its name, it does not (read: no longer) depend on the Sway window manage
 - Shows a preview window containing `whatis` info of binaries and the `Comment=` section of .desktop files
 - History support which will highlight recently used entries
 - Colored output and glyphs for the different entry types
-- Entries are lazily piped into fzf eliminating any lag during startup
+- Entries are lazily piped into `fzf` eliminating any lag during startup
 - Optional support for the XDG Autostart specification
 - Executes arbitrary custom commands (if there are no other matches)
 
