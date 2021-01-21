@@ -51,6 +51,7 @@ else
     HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
   fi
 fi
+PROVIDERS['user']="exit${DEL}exit${DEL}{1}" # Fallback provider that simply executes the exact command if there were no matches
 
 if [[ -n "${HIST_FILE}" ]]; then
   mkdir -p "${HIST_FILE%/*}" && touch "$HIST_FILE"
@@ -255,8 +256,9 @@ for PROVIDER_NAME in "${!PROVIDERS[@]}"; do
   (bash -c "${0} provide ${PROVIDER_NAME}" >>"$FZFPIPE") &
 done
 
-COMMAND_STR=$(
+readarray -t COMMAND_STR <<<$(
   fzf --ansi +s -x -d '\034' --nth ..3 --with-nth 3 \
+    --print-query \
     --preview "$0 describe {2} {1}" \
     --preview-window=up:2:noborder \
     --no-multi --cycle \
@@ -265,10 +267,19 @@ COMMAND_STR=$(
     --color='16,gutter:-1' \
     <"$FZFPIPE"
 ) || exit 1
+# Get the last line of the fzf output. If there were no matches, it contains the query which we'll treat as a custom command
+# If there were matches, it contains the selected item
+COMMAND_STR=$(printf '%s\n' "${COMMAND_STR[@]: -1}")
+# We still need to format the query to conform to our fallback provider.
+# We check for the presence of field separator character to determine if we're dealing with a custom command
+if [[ $COMMAND_STR != *$'\034'* ]]; then
+    COMMAND_STR="${COMMAND_STR}"$'\034user\034'"${COMMAND_STR}"$'\034'
+    SKIP_HIST=1 # I chose not to include custom commands in the history. If this is a bad idea, open an issue please
+fi
 
 [ -z "$COMMAND_STR" ] && exit 1
 
-if [[ -n "${HIST_FILE}" ]]; then
+if [[ -n "${HIST_FILE}" && ! "$SKIP_HIST" ]]; then
   # update history
   for i in "${!HIST_LINES[@]}"; do
     if [[ "${HIST_LINES[i]}" == *" $COMMAND_STR"$'\n' ]]; then

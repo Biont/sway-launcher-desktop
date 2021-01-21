@@ -14,6 +14,7 @@ Despite its name, it does not (read: no longer) depend on the Sway window manage
 - Colored output and glyphs for the different entry types
 - Entries are lazily piped into fzf eliminating any lag during startup
 - Optional support for the XDG Autostart specification
+- Executes arbitrary custom commands (if there are no other matches)
 
 ## Installation
 
