@@ -5,7 +5,7 @@
 shopt -s nullglob globstar
 set -o pipefail
 if ! { exec 0>&3; } 1>/dev/null 2>&1; then
-   exec 3>/dev/null # If file descriptor 3 is unused in parent shell, output to /dev/null
+  exec 3>/dev/null # If file descriptor 3 is unused in parent shell, output to /dev/null
 fi
 # shellcheck disable=SC2154
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
@@ -293,6 +293,11 @@ readarray -d ${DEL} -t PROVIDER_ARGS <<<${PROVIDERS[${PARAMS[1]}]}
 COMMAND=${PROVIDER_ARGS[2]//\{1\}/${PARAMS[0]}}
 COMMAND=${COMMAND//\{2\}/${PARAMS[3]}}
 COMMAND=${COMMAND%%[[:space:]]}
-echo "Launching command: ${COMMAND}" >&3
-setsid /bin/sh -c "${COMMAND}"  >& /dev/null < /dev/null &
-sleep 0.01
+
+if [ -t 1 ]; then
+  echo "Launching command: ${COMMAND}" >&3
+  setsid /bin/sh -c "${COMMAND}" >&/dev/null </dev/null &
+  sleep 0.01
+else
+  echo "${COMMAND}"
+fi

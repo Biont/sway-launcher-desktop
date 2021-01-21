@@ -35,6 +35,15 @@ You can override the default icons/glyphs by setting the appropriate GLYPH_ vari
 set $menu exec $term --class=launcher -e env GLYPH_COMMAND="" GLYPH_DESKTOP="" GLYPH_PROMPT="? " sway-launcher
 ```
 
+By default, the launcher will use a generic & WM-agnostic command to launch the selected program. 
+However, it will detect if its output is being piped to another program and merely print 
+the selected command in that case - instead of launching it by itself. You can use this to integrate the launcher with other tools.
+For example, if you wish to launch your programs with `swaymsg exec`, you can do that like this:
+
+```shell
+ swaymsg exec "$(./sway-launcher-desktop.sh)"
+```
+
 ### Setup a Terminal command
 Some of your desktop entries will probably be TUI programs that expect to be launched in a new terminal window. Those entries have the `Terminal=true` flag set and you need to tell the launcher which terminal emulator to use. Pass the `TERMINAL_COMMAND` environment variable with your terminal startup command to the script to use your preferred terminal emulator. The script will default to `$TERM -e`
 
