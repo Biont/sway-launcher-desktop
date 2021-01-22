@@ -39,7 +39,7 @@ set $menu exec $term --class=launcher -e env GLYPH_COMMAND="" GLYPH_DESKTOP="" G
 By default, the launcher will use a generic & WM-agnostic command to launch the selected program. 
 However, it will detect if its output is being piped to another program and merely print 
 the selected command in that case - instead of launching it by itself. You can use this to integrate the launcher with other tools.
-For example, if you wish to launch your programs with `swaymsg exec`, you can do that like this:
+For example, if you wish to launch your programs with `swaymsg exec`, you can do that like this¹:
 
 ```shell
  swaymsg exec "$(./sway-launcher-desktop.sh)"
@@ -88,3 +88,7 @@ Setting the variable to an empty value disables the history feature entirely.
 ## Troubleshooting
 
 Debug information is directed to file descriptor `3` and can be dumped using `./sway-launcher-desktop.sh 3>> ~/sway-launcher-desktop.log`
+
+---
+
+¹ If you want to use this as a keybinding though, this kind of shell substitution will not work inside the config file. [Here's a way to make it work](https://github.com/Biont/sway-launcher-desktop/issues/33#issuecomment-765145677)
