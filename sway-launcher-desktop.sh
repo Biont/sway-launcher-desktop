@@ -132,6 +132,13 @@ function entries() {
       a++;
       actions[a,"key"]=$0
     }
+    /^\[X-/{
+      sub("^\\[X-", "");
+      sub("\\]$", "");
+      block="action";
+      a++;
+      actions[a,"key"]=$0
+    }
     /^Name=/{ (block=="action")? actions[a,"name"]=$2 : name=$2 }
     ENDFILE{
       if (application){
