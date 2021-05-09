@@ -1,0 +1,19 @@
+[Desktop Entry]
+Version=1.0
+Name=Neovim
+Type=Application
+Terminal=true
+Exec=nvim
+NoDisplay=true
+GenericName=Text Editor
+
+[Desktop Action new-file]
+Name=New File
+Terminal=true
+Exec=nvim
+
+[Desktop Action open-file]
+Name=Open File
+Terminal=true
+NoDisplay=true
+Exec=nvim

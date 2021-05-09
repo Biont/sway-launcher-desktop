@@ -113,6 +113,7 @@ function entries() {
     }
     BEGINFILE{
       application=0;
+      hidden=0;
       block="";
       a=0
 
@@ -140,12 +141,15 @@ function entries() {
       actions[a,"key"]=$0
     }
     /^Name=/{ (block=="action")? actions[a,"name"]=$2 : name=$2 }
+    /^NoDisplay=true/{ (block=="action")? actions[a,"hidden"]=1 : hidden=1 }
     ENDFILE{
       if (application){
-          print FILENAME "\034desktop\034\033[33m" pre name "\033[0m";
+          if (!hidden)
+              print FILENAME "\034desktop\034\033[33m" pre name "\033[0m";
           if (a>0)
               for (i=1; i<=a; i++)
-                  print FILENAME "\034desktop\034\033[33m" pre name "\033[0m (" actions[i, "name"] ")\034" actions[i, "key"]
+                  if (!actions[i, "hidden"])
+                      print FILENAME "\034desktop\034\033[33m" pre name "\033[0m (" actions[i, "name"] ")\034" actions[i, "key"]
       }
     }' \
     $@ </dev/null

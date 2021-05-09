@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Name=Vim
+Type=Application
+Terminal=true
+Exec=vim
+NoDisplay=true
+GenericName=Text Editor
