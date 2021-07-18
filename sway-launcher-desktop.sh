@@ -227,6 +227,7 @@ function list-autostart() {
     BEGINFILE{
       application=0;
       block="";
+      disabled=0;
       a=0
 
       id=desktopFileID(FILENAME)
@@ -239,8 +240,9 @@ function list-autostart() {
     /^\[Desktop Entry\]/{block="entry"}
     /^Type=Application/{application=1}
     /^Name=/{ iname=$2 }
+    /^Hidden=true/{disabled=1}
     ENDFILE{
-      if (application){
+      if (application && !disabled){
           print FILENAME;
       }
     }' \
