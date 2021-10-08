@@ -46,7 +46,7 @@ For example, if you wish to launch your programs with `swaymsg exec`, you can do
 ```
 
 ### Setup a Terminal command
-Some of your desktop entries will probably be TUI programs that expect to be launched in a new terminal window. Those entries have the `Terminal=true` flag set and you need to tell the launcher which terminal emulator to use. Pass the `TERMINAL_COMMAND` environment variable with your terminal startup command to the script to use your preferred terminal emulator. The script will default to `$TERM -e`
+Some of your desktop entries will probably be TUI programs that expect to be launched in a new terminal window. Those entries have the `Terminal=true` flag set and you need to tell the launcher which terminal emulator to use. Pass the `TERMINAL_COMMAND` environment variable with your terminal startup command to the script to use your preferred terminal emulator. The script will default to `$TERMINAL -e`
 
 ### Configure application autostart
 If you want to be able to autostart applications , this script provides a function to handle them for you. Simply run `sway-launcher-desktop.sh autostart` in your `.bashrc`, at the end of your i3/sway config, or wherever else you deem fit.
