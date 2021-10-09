@@ -12,7 +12,7 @@ trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 IFS=$'\n\t'
 DEL=$'\34'
 
-TERMINAL_COMMAND="${TERMINAL_COMMAND:="$TERM -e"}"
+TERMINAL_COMMAND="${TERMINAL_COMMAND:="$TERMINAL -e"}"
 GLYPH_COMMAND="${GLYPH_COMMAND-  }"
 GLYPH_DESKTOP="${GLYPH_DESKTOP-  }"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/sway-launcher-desktop"
