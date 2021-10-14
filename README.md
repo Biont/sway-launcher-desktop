@@ -78,6 +78,22 @@ Note: Pass the environment variable `PROVIDERS_FILE` to read custom providers fr
 The path in `PROVIDERS_FILE` can either be absolute or relative to `${HOME}/.config/sway-launcher-desktop/`.
 
 
+### Keeping builtin providers
+When a custom provider config is used, the default behaviour is to replace the hardcoded builtins. This is not always desirable if you merely wish to *add* something new. Luckily, the built-in providers only call specific functions of the main script, which are also accessible externally.
+So you can simply mimick their behaviour by placing this in your config file:
+
+```
+[desktop]
+list_cmd=/path/to/sway-launcher-desktop.sh list-entries
+preview_cmd=/path/to/sway-launcher-desktop.sh describe-desktop "{1}"
+launch_cmd=/path/to/sway-launcher-desktop.sh run-desktop '{1}' {2}
+
+[command]
+list_cmd=/path/to/sway-launcher-desktop.sh list-commands
+preview_cmd=/path/to/sway-launcher-desktop.sh describe-command "{1}"
+launch_cmd=$TERMINAL_COMMAND {1}
+```
+
 ## Launcher history file
 
 By default, `sway-launcher-desktop` stores a history of commands to make frequently used entries available more quickly.
