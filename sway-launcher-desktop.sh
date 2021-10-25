@@ -158,7 +158,7 @@ function entries() {
 function run-desktop() {
   CMD="$("${0}" generate-command "$@" 2>&3)"
   echo "Generated Launch command from .desktop file: ${CMD}" >&3
-  bash -c "${CMD}"
+  exec "${CMD}"
 }
 function generate-command() {
   # Define the search pattern that specifies the block to search for within the .desktop file
