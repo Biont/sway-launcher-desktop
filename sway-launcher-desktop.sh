@@ -158,7 +158,7 @@ function entries() {
 function run-desktop() {
   CMD="$("${0}" generate-command "$@" 2>&3)"
   echo "Generated Launch command from .desktop file: ${CMD}" >&3
-  eval "exec ${CMD}"
+  eval "${CMD}"
 }
 function generate-command() {
   # Define the search pattern that specifies the block to search for within the .desktop file
@@ -194,6 +194,7 @@ function generate-command() {
        }
     END{
       if(path){ printf "cd " path " && " }
+      printf "exec "
       if (terminal){ printf terminal_cmd " " }
       print exec
     }' "$1"
