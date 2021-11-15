@@ -45,7 +45,7 @@ For example, if you wish to launch your programs with `swaymsg exec`, you can do
  swaymsg exec "$(./sway-launcher-desktop.sh)"
 ```
 
-### Setup a Terminal command
+### Set up a Terminal command
 Some of your desktop entries will probably be TUI programs that expect to be launched in a new terminal window. Those entries have the `Terminal=true` flag set and you need to tell the launcher which terminal emulator to use. Pass the `TERMINAL_COMMAND` environment variable with your terminal startup command to the script to use your preferred terminal emulator. The script will default to `$TERMINAL -e`
 
 ### Configure application autostart
@@ -100,6 +100,12 @@ By default, `sway-launcher-desktop` stores a history of commands to make frequen
 This history is stored in a file in `~/.cache/` (or `$XDG_CACHE_HOME`, if that environment variable is set).
 You may change the file path and name by setting the environment variable `HIST_FILE` to the desired path.
 Setting the variable to an empty value disables the history feature entirely.
+
+### Housekeeping
+After a while, this history might grow and contain some invalid entries due to removed/renamed programs etc.
+You can use `./sway-launcher-desktop.sh purge` to identify broken entries and remove them.
+Consider adding this command to a cronjob, startup script, or maybe even hook it into your package manager.
+
 
 ## Troubleshooting
 
