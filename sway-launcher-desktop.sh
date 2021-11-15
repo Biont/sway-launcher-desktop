@@ -3,7 +3,7 @@
 # Based on: https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher
 # https://gist.github.com/Biont/40ef59652acf3673520c7a03c9f22d2a
 shopt -s nullglob globstar
-set -xo pipefail
+set -o pipefail
 if ! { exec 0>&3; } 1>/dev/null 2>&1; then
   exec 3>/dev/null # If file descriptor 3 is unused in parent shell, output to /dev/null
 fi
@@ -251,6 +251,7 @@ function list-autostart() {
 }
 
 purge() {
+ > "${HIST_FILE}"
  declare -A PURGE_CMDS
  for PROVIDER_NAME in "${!PROVIDERS[@]}"; do
    readarray -td ${DEL} PROVIDER_ARGS <<<${PROVIDERS[${PROVIDER_NAME}]}
@@ -258,12 +259,12 @@ purge() {
    [ -z "${PURGE_CMD}" ] && PURGE_CMD='test -f {1}'
    PURGE_CMDS[$PROVIDER_NAME]="${PURGE_CMD%$'\n'}"
   done
-  for HIST_LINE in "${HIST_LINES[@]#* }"; do
+  for HIST_LINE in "${HIST_LINES[@]#*' '}"; do
     readarray -td $'\034' HIST_ENTRY <<<${HIST_LINE}
     ENTRY=${HIST_ENTRY[1]}
     readarray -td ' ' FILTER <<<${PURGE_CMDS[$ENTRY]//\{1\}/${HIST_ENTRY[0]}}
    "${FILTER[@]%$'\n'}" 1>/dev/null # Run filter command discarding output. We only want the exit status
-   [ $? -eq 0 ] && echo "yay"
+   [ $? -eq 0 ] && echo "1 ${HIST_LINE[@]%$'\n'}" >> "${HIST_FILE}"
   done
 }
 
