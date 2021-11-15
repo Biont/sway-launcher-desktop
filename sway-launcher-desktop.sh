@@ -23,22 +23,23 @@ if [[ "${PROVIDERS_FILE#/}" == "${PROVIDERS_FILE}" ]]; then
 fi
 
 # Provider config entries are separated by the field separator \034 and have the following structure:
-# list_cmd,preview_cmd,launch_cmd
+# list_cmd,preview_cmd,launch_cmd,purge_cmd
 declare -A PROVIDERS
 if [ -f "${PROVIDERS_FILE}" ]; then
   eval "$(awk -F= '
   BEGINFILE{ provider=""; }
   /^\[.*\]/{sub("^\\[", "");sub("\\]$", "");provider=$0}
-  /^(launch|list|preview)_cmd/{st = index($0,"=");providers[provider][$1] = substr($0,st+1)}
+  /^(launch|list|preview|purge)_cmd/{st = index($0,"=");providers[provider][$1] = substr($0,st+1)}
   ENDFILE{
     for (key in providers){
       if(!("list_cmd" in providers[key])){continue;}
       if(!("launch_cmd" in providers[key])){continue;}
       if(!("preview_cmd" in providers[key])){continue;}
+      if(!("purge_cmd" in providers[key])){providers[key]["purge_cmd"] = "exit 0";}
       for (entry in providers[key]){
        gsub(/[\x27,\047]/,"\x27\"\x27\"\x27", providers[key][entry])
       }
-      print "PROVIDERS[\x27" key "\x27]=\x27" providers[key]["list_cmd"] "\034" providers[key]["preview_cmd"] "\034" providers[key]["launch_cmd"] "\x27\n"
+      print "PROVIDERS[\x27" key "\x27]=\x27" providers[key]["list_cmd"] "\034" providers[key]["preview_cmd"] "\034" providers[key]["launch_cmd"] "\034" providers[key]["purge_cmd"] "\x27\n"
     }
   }' "${PROVIDERS_FILE}")"
   if [[ ! -v HIST_FILE ]]; then
@@ -263,8 +264,10 @@ purge() {
     readarray -td $'\034' HIST_ENTRY <<<${HIST_LINE}
     ENTRY=${HIST_ENTRY[1]}
     readarray -td ' ' FILTER <<<${PURGE_CMDS[$ENTRY]//\{1\}/${HIST_ENTRY[0]}}
-   "${FILTER[@]%$'\n'}" 1>/dev/null # Run filter command discarding output. We only want the exit status
-   [ $? -eq 0 ] && echo "1 ${HIST_LINE[@]%$'\n'}" >> "${HIST_FILE}"
+    "${FILTER[@]%$'\n'}" 1>/dev/null # Run filter command discarding output. We only want the exit status
+    if [[ $? -eq 0 ]]; then
+      echo "1 ${HIST_LINE[@]%$'\n'}" >> "${HIST_FILE}"
+    fi
   done
 }
 
