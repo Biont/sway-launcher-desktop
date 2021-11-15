@@ -3,7 +3,7 @@
 # Based on: https://gitlab.com/FlyingWombat/my-scripts/blob/master/sway-launcher
 # https://gist.github.com/Biont/40ef59652acf3673520c7a03c9f22d2a
 shopt -s nullglob globstar
-set -o pipefail
+set -xo pipefail
 if ! { exec 0>&3; } 1>/dev/null 2>&1; then
   exec 3>/dev/null # If file descriptor 3 is unused in parent shell, output to /dev/null
 fi
@@ -45,8 +45,8 @@ if [ -f "${PROVIDERS_FILE}" ]; then
     HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-${PROVIDERS_FILE##*/}-history.txt"
   fi
 else
-  PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop \"{1}\"${DEL}${0} run-desktop '{1}' {2}"
-  PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command \"{1}\"${DEL}${TERMINAL_COMMAND} {1}"
+  PROVIDERS['desktop']="${0} list-entries${DEL}${0} describe-desktop \"{1}\"${DEL}${0} run-desktop '{1}' {2}${DEL}test -f {1}"
+  PROVIDERS['command']="${0} list-commands${DEL}${0} describe-command \"{1}\"${DEL}${TERMINAL_COMMAND} {1}${DEL}command -v {1}"
   if [[ ! -v HIST_FILE ]]; then
     HIST_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/${0##*/}-history.txt"
   fi
@@ -250,8 +250,25 @@ function list-autostart() {
     ${DIRS[@]} </dev/null
 }
 
+purge() {
+ declare -A PURGE_CMDS
+ for PROVIDER_NAME in "${!PROVIDERS[@]}"; do
+   readarray -td ${DEL} PROVIDER_ARGS <<<${PROVIDERS[${PROVIDER_NAME}]}
+   PURGE_CMD=${PROVIDER_ARGS[3]}
+   [ -z "${PURGE_CMD}" ] && PURGE_CMD='test -f {1}'
+   PURGE_CMDS[$PROVIDER_NAME]="${PURGE_CMD%$'\n'}"
+  done
+  for HIST_LINE in "${HIST_LINES[@]#* }"; do
+    readarray -td $'\034' HIST_ENTRY <<<${HIST_LINE}
+    ENTRY=${HIST_ENTRY[1]}
+    readarray -td ' ' FILTER <<<${PURGE_CMDS[$ENTRY]//\{1\}/${HIST_ENTRY[0]}}
+   "${FILTER[@]%$'\n'}" 1>/dev/null # Run filter command discarding output. We only want the exit status
+   [ $? -eq 0 ] && echo "yay"
+  done
+}
+
 case "$1" in
-describe | describe-desktop | describe-command | entries | list-entries | list-commands | list-autostart | generate-command | autostart | run-desktop | provide)
+describe | describe-desktop | describe-command | entries | list-entries | list-commands | list-autostart | generate-command | autostart | run-desktop | provide | purge)
   "$@"
   exit
   ;;
