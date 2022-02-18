@@ -33,7 +33,7 @@ bindsym $mod+d exec $menu
 
 You can override the default icons/glyphs by setting the appropriate GLYPH_ variable in your $menu command, e.g.:
 ```
-set $menu exec $term --class=launcher -e env GLYPH_COMMAND="" GLYPH_DESKTOP="" GLYPH_PROMPT="? " sway-launcher
+set $menu exec $term -e env GLYPH_COMMAND="" GLYPH_DESKTOP="" GLYPH_PROMPT="? " sway-launcher
 ```
 
 By default, the launcher will use a generic & WM-agnostic command to launch the selected program. 
