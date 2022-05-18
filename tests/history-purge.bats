@@ -14,12 +14,14 @@ setup() {
    echo "1 ${SLD_DESKTOP_ROOT}cjsdalkcnjsaddesktop  I wanna be purged" >> "$SLD_HIST_FILE"
    echo "1 awkcommand  awk" >> "$SLD_HIST_FILE"
    echo "1 xksdkasjkslajdslakcommand  I wanna be purged" >> "$SLD_HIST_FILE"
+   echo "1 xksdkasjkslajdslakcommand  I wanna be purged too" >> "$SLD_HIST_FILE"
 }
 
 @test "Purge command removes invalid entries" {
   run ../sway-launcher-desktop.sh purge
   readarray HIST_LINES <"$SLD_HIST_FILE"
-  cat "$SLD_HIST_FILE"
+#  cat "$SLD_HIST_FILE"
+  echo "$output"
   [ "$status" -eq 0 ]
   [[ ${#HIST_LINES[@]} ==  2 ]]
 }
