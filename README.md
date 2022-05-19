@@ -45,7 +45,7 @@ For example, if you wish to launch your programs with `swaymsg exec`, you can do
  swaymsg exec "$(./sway-launcher-desktop.sh)"
 ```
 
-### Setup a Terminal command
+### Set up a Terminal command
 Some of your desktop entries will probably be TUI programs that expect to be launched in a new terminal window. Those entries have the `Terminal=true` flag set and you need to tell the launcher which terminal emulator to use. Pass the `TERMINAL_COMMAND` environment variable with your terminal startup command to the script to use your preferred terminal emulator. The script will default to `$TERMINAL -e`
 
 ### Configure application autostart
@@ -62,6 +62,7 @@ The structure looks like this:
 list_cmd=echo -e 'my-custom-entry\034my-provider\034  My custom provider'
 preview_cmd=echo -e 'This is the preview of {1}'
 launch_cmd=notify-send 'I am now launching {1}'
+purge_cmd=command -v '{1}' || exit 43
 ```
 
 The `list_cmd` generated the list of entries. For each entry, it has to print the following columns, separated by the `\034` field separator character:
@@ -73,6 +74,8 @@ The `list_cmd` generated the list of entries. For each entry, it has to print th
 The `preview_cmd` renders the contents of the `fzf` preview panel. You can use the template variable `{1}` in your command, which will be substituted with the value of the selected item.
 
 The `launch_cmd` is fired when the user has selected one of the provider's entries.
+
+The `purge_cmd` is used as part of the `purge` function. It tests any entry of a provider. If the test exits with `43`, then the entry will be removed from the history file
 
 Note: Pass the environment variable `PROVIDERS_FILE` to read custom providers from another file than the default `providers.conf`.
 The path in `PROVIDERS_FILE` can either be absolute or relative to `${HOME}/.config/sway-launcher-desktop/`.
@@ -87,11 +90,13 @@ So you can simply mimick their behaviour by placing this in your config file:
 list_cmd=/path/to/sway-launcher-desktop.sh list-entries
 preview_cmd=/path/to/sway-launcher-desktop.sh describe-desktop "{1}"
 launch_cmd=/path/to/sway-launcher-desktop.sh run-desktop '{1}' {2}
+purge_cmd=test -f '{1}' || exit 43
 
 [command]
 list_cmd=/path/to/sway-launcher-desktop.sh list-commands
 preview_cmd=/path/to/sway-launcher-desktop.sh describe-command "{1}"
 launch_cmd=$TERMINAL_COMMAND {1}
+purge_cmd=command -v '{1}' || exit 43
 ```
 
 ## Launcher history file
@@ -100,6 +105,12 @@ By default, `sway-launcher-desktop` stores a history of commands to make frequen
 This history is stored in a file in `~/.cache/` (or `$XDG_CACHE_HOME`, if that environment variable is set).
 You may change the file path and name by setting the environment variable `HIST_FILE` to the desired path.
 Setting the variable to an empty value disables the history feature entirely.
+
+### Housekeeping
+After a while, this history might grow and contain some invalid entries due to removed/renamed programs etc.
+You can use `./sway-launcher-desktop.sh purge` to identify broken entries and remove them.
+Consider adding this command to a cronjob, startup script, or maybe even hook it into your package manager.
+
 
 ## Troubleshooting
 
