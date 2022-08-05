@@ -27,7 +27,7 @@ Arch Linux users can also grab it from the AUR (thanks @turtlewit)
 Configure it in Sway like this:
 ```
 for_window [app_id="^launcher$"] floating enable, sticky enable, resize set 30 ppt 60 ppt, border pixel 10
-set $menu exec $term --class=launcher -e /path/to/repo/sway-launcher-desktop.sh
+set $menu exec $term --app-id=launcher -e /path/to/repo/sway-launcher-desktop.sh
 bindsym $mod+d exec $menu
 ```
 
