@@ -27,9 +27,10 @@ Arch Linux users can also grab it from the AUR (thanks @turtlewit)
 Configure it in Sway like this:
 ```
 for_window [app_id="^launcher$"] floating enable, sticky enable, resize set 30 ppt 60 ppt, border pixel 10
-set $menu exec $term --app-id=launcher -e /path/to/repo/sway-launcher-desktop.sh
+set $menu exec $term -a launcher -e /path/to/repo/sway-launcher-desktop.sh
 bindsym $mod+d exec $menu
 ```
+(this example was made with `term=foot` in mind; it may need to be adjusted for other terminals)
 
 You can override the default icons/glyphs by setting the appropriate GLYPH_ variable in your $menu command, e.g.:
 ```
