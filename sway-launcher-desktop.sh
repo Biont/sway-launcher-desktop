@@ -296,7 +296,8 @@ readarray -t COMMAND_STR <<<$(
   fzf --ansi +s -x -d '\034' --nth ..3 --with-nth 3 \
     --print-query \
     --preview "$0 describe {2} {1}" \
-    --preview-window=up:2:noborder \
+    --preview-window=down:2:noborder \
+    --reverse \
     --no-multi --cycle \
     --prompt="${GLYPH_PROMPT-# }" \
     --header='' --no-info --margin='1,2' \
