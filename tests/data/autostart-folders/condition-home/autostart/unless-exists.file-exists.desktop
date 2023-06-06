@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Initial Setup
+Exec=touch $DID_RUN/unless-exists.file-exists
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=GNOME;GTK;System;
+OnlyShowIn=GNOME;Unity;
+NoDisplay=true
+AutostartCondition=unless-exists marker-file.txt
+X-GNOME-HiddenUnderSystemd=true
+X-Ubuntu-Gettext-Domain=gnome-initial-setup
