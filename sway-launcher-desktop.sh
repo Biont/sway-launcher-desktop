@@ -291,8 +291,12 @@ purge() {
 }
 
 case "$1" in
-describe | describe-desktop | describe-command | entries | list-entries | list-commands | list-autostart | generate-command | autostart | run-desktop | provide | purge)
+describe | describe-desktop | describe-command | entries | list-commands | list-autostart | generate-command | autostart | run-desktop | provide | purge)
   "$@"
+  exit
+  ;;
+list-entries)
+  "$@" | sort -k2
   exit
   ;;
 esac
