@@ -201,9 +201,27 @@ function generate-command() {
     }' "$1"
 }
 
+function shouldAutostart() {
+    local condition="$(cat $1 | grep "AutostartCondition" | cut -d'=' -f2)"
+    local filename="${XDG_CONFIG_HOME-${HOME}/.config}/${condition#* }"
+    case $condition in
+        if-exists*)
+            [[ -e $filename ]]
+            ;;
+        unless-exists*)
+            [[ ! -e $filename ]]
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+}
+
 function autostart() {
   for application in $(list-autostart); do
-    (exec setsid /bin/sh -c "$(run-desktop "${application}")" &>/dev/null &)
+      if shouldAutostart "$application" ; then
+          (exec setsid /bin/sh -c "$(run-desktop "${application}")" &>/dev/null &)
+      fi
   done
 }
 
