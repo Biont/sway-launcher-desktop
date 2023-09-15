@@ -101,8 +101,9 @@ function list-entries() {
       DIRS[$i]="${DIRS[i]}/applications/**/*.desktop"
     fi
   done
+
   # shellcheck disable=SC2068
-  entries ${DIRS[@]}
+  entries ${DIRS[@]} | sort -k2
 }
 function entries() {
   # shellcheck disable=SC2068
