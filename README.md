@@ -37,6 +37,11 @@ You can override the default icons/glyphs by setting the appropriate GLYPH_ vari
 set $menu exec $term -e env GLYPH_COMMAND="" GLYPH_DESKTOP="" GLYPH_PROMPT="? " sway-launcher
 ```
 
+If `fzf` is not in your `$PATH` you can specify the path by supplying a value to the `FZF_COMMAND` variable.
+```
+set $menu exec $term -e env FZF_COMMAND="/path/to/fzf" sway-launcher
+```
+
 By default, the launcher will use a generic & WM-agnostic command to launch the selected program. 
 However, it will detect if its output is being piped to another program and merely print 
 the selected command in that case - instead of launching it by itself. You can use this to integrate the launcher with other tools.
