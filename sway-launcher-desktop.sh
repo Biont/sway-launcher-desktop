@@ -22,6 +22,9 @@ if [[ "${PROVIDERS_FILE#/}" == "${PROVIDERS_FILE}" ]]; then
   # $PROVIDERS_FILE is a relative path, prepend $CONFIG_DIR
   PROVIDERS_FILE="${CONFIG_DIR}/${PROVIDERS_FILE}"
 fi
+if [[ ! -v PREVIEW_WINDOW ]]; then
+    PREVIEW_WINDOW=up:2:noborder
+fi
 
 # Provider config entries are separated by the field separator \034 and have the following structure:
 # list_cmd,preview_cmd,launch_cmd,purge_cmd
@@ -316,7 +319,7 @@ readarray -t COMMAND_STR <<<$(
   ${FZF_COMMAND} --ansi +s -x -d '\034' --nth ..3 --with-nth 3 \
     --print-query \
     --preview "$0 describe {2} {1}" \
-    --preview-window=up:2:noborder \
+    --preview-window="${PREVIEW_WINDOW}" \
     --no-multi --cycle \
     --prompt="${GLYPH_PROMPT-# }" \
     --header='' --no-info --margin='1,2' \
