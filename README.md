@@ -57,6 +57,9 @@ Some of your desktop entries will probably be TUI programs that expect to be lau
 ### Configure application autostart
 If you want to be able to autostart applications , this script provides a function to handle them for you. Simply run `sway-launcher-desktop.sh autostart` in your `.bashrc`, at the end of your i3/sway config, or wherever else you deem fit.
 
+### Configure fzf preview window
+You can configure the fzf preview window using the environment variable `PREVIEW_WINDOW` (default: `up:2:noborder`). For example, if you prefer a taller window, you could use `PREVIEW_WINDOW=5:up`. The content of `PREVIEW_WINDOW` is passed to the `--preview-window` option, so check out the fzf manual for further details.
+
 ## Extending the launcher
 
 In addition to desktop application entries and binaries, you can extend `sway-launcher-desktop` with custom item providers.
