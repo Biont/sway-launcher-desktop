@@ -8,7 +8,7 @@ Despite its name, it does not (read: no longer) depend on the Sway window manage
 ## Features
 - Lists and executes available binaries
 - Lists and executes .desktop files (entries as well as actions)
-- Does not depend on `xdg-utils`. Just pure bash and `awk`
+- Does not depend on `xdg-utils`. Just pure bash and `awk` (specifically gawk)
 - Shows a preview window containing `whatis` info of binaries and the `Comment=` section of .desktop files
 - History support which will highlight recently used entries
 - Colored output and glyphs for the different entry types
@@ -18,7 +18,9 @@ Despite its name, it does not (read: no longer) depend on the Sway window manage
 
 ## Installation
 
-Make sure you have `fzf` installed and download this repository. 
+Make sure you have `fzf` and `awk` installed and download this repository. 
+To be precise, the script specifically depends on GNU awk (`gawk`) so check what flavour your distribution provides.
+
 Arch Linux users can also grab it from the AUR (thanks @turtlewit)
 
 * [sway-launcher-desktop](https://aur.archlinux.org/packages/sway-launcher-desktop/)
